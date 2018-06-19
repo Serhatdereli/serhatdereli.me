@@ -7,8 +7,9 @@ class DefaultController extends Controller
 {
 	public static function display()
 	{
-		$tpl = Template::create('pages/biscuit-link.tpl');
-		$tpl->assign('biscuit_link_ver', BISCUIT_LINK_VERSION);
+		$tpl = Template::create('pages/homepage.tpl');
+		$tpl->assign('name', 'Serhat');
+		$tpl->assign('page_title', 'Serhat\'s Homepage');
 		$tpl->display();
 	}
 
