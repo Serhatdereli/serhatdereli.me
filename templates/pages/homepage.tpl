@@ -10,23 +10,23 @@
         <!-- Header -->
             <header id="header">
                 <h1>{$name}</h1>
-                <p>Security Chief &nbsp;&bull;&nbsp; Cyborg &nbsp;&bull;&nbsp; Never asked for this</p>
+                <p>Computer Scientist &nbsp;&bull;&nbsp; Help &nbsp;&bull;&nbsp; Get me out</p>
                 <nav>
                     <ul>
                         <li>
                             <a href="#" class="icon fa-twitter"><span class="label">Twitter</span></a>
                         </li>
                         <li>
-                            <a href="#" class="icon fa-facebook"><span class="label">Facebook</span></a>
+                            <a href="www.facebook.com" class="icon fa-facebook"><span class="label">Facebook</span></a>
                         </li>
                         <li>
                             <a href="#" class="icon fa-dribbble"><span class="label">Dribbble</span></a>
                         </li>
                         <li>
-                            <a href="#" class="icon fa-github"><span class="label">Github</span></a>
+                            <a href="https://github.com/Serhatdereli" class="icon fa-github"><span class="label">Github</span></a>
                         </li>
                         <li>
-                            <a href="#" class="icon fa-envelope-o"><span class="label">Email</span></a>
+                            <a href="mailto:sdereli1993@gmail.com" class="icon fa-envelope-o"><span class="label">Email</span></a>
                         </li>
                     </ul>
                 </nav>
