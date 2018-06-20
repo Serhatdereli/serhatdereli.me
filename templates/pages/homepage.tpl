@@ -14,13 +14,7 @@
                 <nav>
                     <ul>
                         <li>
-                            <a href="#" class="icon fa-twitter"><span class="label">Twitter</span></a>
-                        </li>
-                        <li>
-                            <a href="www.facebook.com" class="icon fa-facebook"><span class="label">Facebook</span></a>
-                        </li>
-                        <li>
-                            <a href="#" class="icon fa-dribbble"><span class="label">Dribbble</span></a>
+                            <a href="https://www.linkedin.com/in/serhat-dereli/" class="icon fa-linkedin"><span class="label">Twitter</span></a>
                         </li>
                         <li>
                             <a href="https://github.com/Serhatdereli" class="icon fa-github"><span class="label">Github</span></a>
