@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>From Zero to Remote Tech Career — A Long-Term Plan</title>
+<meta name="description" content="A realistic, incremental long-term plan to go from zero programming experience to a remote/hybrid software role at a Swiss company and salary, while building real computer-science knowledge.">
+<style>
+  :root{
+    --ink:#2b2f33; --muted:#6b7178; --line:#e6e8eb; --bg:#f6f7f9;
+    --card:#ffffff; --accent:#3a7bd5; --accent-2:#00b894; --hero1:#1f2933; --hero2:#3a4a5a;
+    --code-bg:#f0f2f4;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font:17px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:var(--accent); text-decoration:none}
+  a:hover{text-decoration:underline}
+
+  /* Hero */
+  .hero{
+    background:linear-gradient(135deg,var(--hero1),var(--hero2));
+    color:#fff; padding:72px 24px 64px; text-align:center;
+  }
+  .hero h1{font-size:2.4rem; line-height:1.2; margin:0 0 18px; font-weight:700; letter-spacing:-.01em}
+  .hero .lede{
+    max-width:760px; margin:0 auto; font-size:1.12rem; color:#dfe6ee;
+    border-left:3px solid var(--accent-2); padding-left:18px; text-align:left;
+  }
+  .hero .lede strong{color:#fff}
+  .meta{margin-top:26px; font-size:.85rem; color:#aebccb; letter-spacing:.04em; text-transform:uppercase}
+
+  /* Layout */
+  .wrap{max-width:880px; margin:0 auto; padding:0 24px}
+  main{padding:48px 0 72px}
+  section{
+    background:var(--card); border:1px solid var(--line); border-radius:14px;
+    padding:30px 34px; margin:0 0 26px; box-shadow:0 1px 2px rgba(16,24,40,.04);
+  }
+  h2{font-size:1.5rem; margin:.2em 0 .6em; letter-spacing:-.01em}
+  h3{font-size:1.16rem; margin:1.4em 0 .4em; color:var(--ink)}
+  h2 .ph{color:var(--accent); font-weight:700}
+  p{margin:.6em 0}
+  ul,ol{margin:.5em 0; padding-left:1.3em}
+  li{margin:.3em 0}
+  strong{color:#1c2126}
+  code{background:var(--code-bg); padding:.12em .4em; border-radius:5px; font-size:.9em;
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  blockquote{
+    margin:1em 0; padding:.6em 1em; background:#f3f8ff;
+    border-left:4px solid var(--accent); border-radius:0 8px 8px 0; color:#39414a;
+  }
+  blockquote p{margin:.2em 0}
+
+  /* Callout */
+  .callout{
+    background:linear-gradient(135deg,#eafaf1,#e3f6ee);
+    border:1px solid #b9e6cd; border-left:4px solid var(--accent-2);
+    border-radius:10px; padding:18px 22px; margin:14px 0;
+  }
+  .callout strong{color:#0d7a52}
+
+  /* Tables */
+  .table-wrap{overflow-x:auto; margin:16px 0}
+  table{border-collapse:collapse; width:100%; font-size:.95rem}
+  th,td{text-align:left; padding:11px 14px; border-bottom:1px solid var(--line); vertical-align:top}
+  thead th{background:#f0f3f7; border-bottom:2px solid #dde2e8; font-size:.86rem;
+    text-transform:uppercase; letter-spacing:.03em; color:#4a525b}
+  tbody tr:last-child td{border-bottom:none}
+
+  /* Phase headers */
+  .phase{border-left:4px solid var(--accent); padding-left:16px}
+  .phase .when{color:var(--muted); font-weight:500; font-size:.95rem}
+  .goal{font-style:italic; color:#3a414a; margin:.2em 0 .6em}
+  .milestone{
+    background:#fff7e6; border:1px solid #ffe0a3; border-radius:8px;
+    padding:10px 14px; margin-top:10px; font-size:.95rem;
+  }
+  .milestone b{color:#b9770a}
+
+  /* Checklist */
+  .check{list-style:none; padding-left:0}
+  .check li{position:relative; padding-left:30px; margin:.5em 0}
+  .check li:before{
+    content:"☐"; position:absolute; left:0; top:-1px; color:var(--accent); font-size:1.2em;
+  }
+  .check b{color:var(--accent)}
+
+  /* TOC */
+  .toc{font-size:.95rem}
+  .toc ol{counter-reset:item; list-style:none; padding-left:0}
+  .toc li{margin:.35em 0}
+  .toc a{color:#39414a}
+
+  /* divider note */
+  .note{font-size:.85rem; color:var(--muted); border-top:1px solid var(--line); padding-top:16px; margin-top:8px}
+  footer.page{text-align:center; color:var(--muted); font-size:.85rem; padding:30px 24px 50px}
+  hr{border:none; border-top:1px solid var(--line); margin:22px 0}
+  @media (max-width:600px){
+    .hero h1{font-size:1.8rem}
+    section{padding:22px 20px}
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <h1>From Zero to Remote Tech Career</h1>
+    <div class="lede">
+      <strong>Situation:</strong> lives in Switzerland, Swiss national.<br>
+      <strong>Goal:</strong> financial freedom through a high-paying tech career —
+      <strong>working remotely (or hybrid) for a Swiss company at a Swiss salary</strong> —
+      while continuously building real computer-science knowledge from the ground up.
+    </div>
+    <div class="meta">A realistic, incremental ~2.5–4 year plan</div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section class="toc">
+    <h2>On this page</h2>
+    <ol>
+      <li><a href="#realistic">The good news: the dream is genuinely realistic</a></li>
+      <li><a href="#advantages">His built-in advantages</a></li>
+      <li><a href="#principles">Guiding principles</a></li>
+      <li><a href="#pathway">The 8-phase pathway</a></li>
+      <li><a href="#money">Financial-freedom layer</a></li>
+      <li><a href="#rhythm">Suggested weekly rhythm</a></li>
+      <li><a href="#checklist">Milestone checklist</a></li>
+      <li><a href="#resources">Curated resources</a></li>
+    </ol>
+  </section>
+
+  <section id="realistic">
+    <h2>The good news: the dream is genuinely realistic for him</h2>
+    <p>Most people chasing "remote for a Swiss company, Swiss salary" hit a wall of legal/tax
+      problems — permanent-establishment risk, social-security gaps, work-permit issues.
+      <strong>None of that applies to him.</strong> Because he <em>lives in Switzerland and is a
+      Swiss national</em>:</p>
+    <ul>
+      <li>He can be hired as a normal Swiss employee — no Employer of Record, no cross-border
+        structuring, no permit needed.</li>
+      <li>Remote and hybrid work for Swiss companies is <strong>completely standard</strong>
+        post-2020. Swiss employers happily let Swiss-resident staff work from home.</li>
+      <li>He's already inside the highest-paying tech labour market in Europe, with the right to
+        work in it.</li>
+    </ul>
+    <div class="callout">
+      So the dream isn't the hard part. <strong>The only real challenge is becoming a hireable
+      engineer.</strong> That's a pure skill-and-evidence problem — exactly what this plan solves.
+    </div>
+    <h3>What the money looks like (2026 data)</h3>
+    <ul>
+      <li>Entry-level / junior software engineer in Switzerland: <strong>~CHF&nbsp;65k–105k</strong>
+        (Zurich at the top end).</li>
+      <li>Median Swiss developer salary: <strong>~CHF&nbsp;100k–110k+</strong>, among the highest in
+        Europe; senior/specialist roles go well above CHF&nbsp;130k.</li>
+      <li>Most Swiss tech roles are now <strong>hybrid by default</strong>, and fully-remote Swiss
+        roles are common and growing — so "remote for a Swiss company" is a normal job posting for
+        someone resident in CH.</li>
+    </ul>
+    <p>The path to <em>financial freedom</em> here is straightforward in shape: land a Swiss junior
+      dev role → grow to mid/senior over a few years → bank the (large) gap between a Swiss tech
+      salary and living costs.</p>
+  </section>
+
+  <section id="advantages">
+    <h2>His built-in advantages (use them)</h2>
+    <ol>
+      <li><strong>Residency + nationality</strong> — no visa, no relocation, full access to Swiss
+        employers and Swiss salaries.</li>
+      <li><strong>Language</strong> — as a Swiss national he likely already has German, French, or
+        Italian plus English. That is a <em>major</em> hiring multiplier; many international
+        candidates can't compete on local-language roles. Keep English at professional level; it's
+        the working language of most Swiss tech teams.</li>
+      <li><strong>Local network &amp; on-site option</strong> — he can do internships, meetups, and
+        on-site interviews easily, then negotiate remote/hybrid once he's proven.</li>
+    </ol>
+  </section>
+
+  <section id="principles">
+    <h2>Guiding principles</h2>
+    <ol>
+      <li><strong>Each phase should be self-funding or self-justifying.</strong> Land small paid
+        work early so motivation and money both stay alive.</li>
+      <li><strong>Build in public.</strong> A public GitHub + a few shipped projects beats a
+        certificate. Swiss employers hire <em>evidence</em>.</li>
+      <li><strong>Depth beats breadth.</strong> Real CS fundamentals are what separate a CHF&nbsp;70k
+        coder from a CHF&nbsp;120k engineer.</li>
+      <li><strong>Ship &gt; study.</strong> Always have one project in flight that uses what's being
+        learned.</li>
+      <li><strong>Leverage the local angle.</strong> On-site/hybrid first if needed to break in,
+        then convert to remote — being physically in CH makes that easy.</li>
+    </ol>
+  </section>
+
+  <section id="pathway">
+    <h2>The 8-phase pathway</h2>
+    <p>A realistic full-time pace is ~2.5–3 years to a solid remote Swiss role; part-time (while
+      keeping a current job) is ~3.5–4 years. Adjust the calendar, keep the order.</p>
+
+    <div class="phase">
+      <h3><span class="ph">Phase 0</span> — Foundations &amp; honest self-assessment
+        <span class="when">(Month 0–1)</span></h3>
+      <p class="goal">Goal: decide it's real, set up the environment, remove excuses.</p>
+      <ul>
+        <li>Pick a primary language to <em>learn programming with</em>: <strong>Python</strong>
+          (gentlest, most versatile) or <strong>JavaScript</strong> (if web is the immediate
+          interest).</li>
+        <li>Set up the toolkit: a laptop that runs VS Code, Git, and a terminal. Create a
+          <strong>GitHub account</strong> today.</li>
+        <li>Decide a weekly time budget and protect it in a calendar (even 8–10 focused hrs/week
+          compounds).</li>
+        <li>Quick wins: freeCodeCamp's first certificate, or the first weeks of
+          <strong>Harvard CS50x</strong> (free, world-class on-ramp).</li>
+      </ul>
+      <div class="milestone"><b>Milestone:</b> a public GitHub repo with a tiny program he wrote
+        himself, and a fixed weekly study schedule.</div>
+    </div>
+
+    <div class="phase">
+      <h3><span class="ph">Phase 1</span> — Programming fundamentals
+        <span class="when">(Month 1–4)</span></h3>
+      <p class="goal">Goal: write real programs and think in code.</p>
+      <ul>
+        <li><strong>CS50x</strong> (Harvard, free on edX) — C, Python, SQL, web basics, and
+          <em>how computers actually work</em>. Finish it; it's the backbone.</li>
+        <li>Reinforce with daily small problems (Exercism, or Codewars in moderation).</li>
+        <li>Learn <strong>Git/GitHub properly</strong> — branches, commits, pull requests. A job
+          skill, not optional.</li>
+      </ul>
+      <div class="milestone"><b>Milestone:</b> CS50 final project shipped to GitHub; comfortable
+        writing a 150–300 line program from a blank file.</div>
+    </div>
+
+    <div class="phase">
+      <h3><span class="ph">Phase 2</span> — Pick a track &amp; get job-ready
+        <span class="when">(Month 4–10)</span></h3>
+      <p class="goal">Goal: become hireable in one concrete specialization.</p>
+      <p>Choose ONE track to go deep (he can broaden later):</p>
+      <ul>
+        <li><strong>Web (recommended starter — most jobs, most remote-friendly):</strong> HTML/CSS →
+          JavaScript → React (frontend) and/or Node.js + a database (backend). The
+          <a href="https://roadmap.sh">roadmap.sh</a> roadmaps are the map.</li>
+        <li><strong>Data / Python:</strong> SQL, pandas, APIs, a bit of cloud → data-analyst then
+          data-engineer roles (strong demand in Swiss finance/pharma).</li>
+        <li><strong>Cloud / DevOps:</strong> Linux, networking, Docker, one cloud (AWS/Azure) + an
+          entry cert — very well paid in CH.</li>
+      </ul>
+      <p>Build <strong>3–4 portfolio projects</strong> that solve a believable problem (not todo-app
+        #9). One should be deployed live with a URL.</p>
+      <div class="milestone"><b>Milestone:</b> a portfolio site + 3 deployed projects + a CV listing
+        them.</div>
+    </div>
+
+    <div class="phase">
+      <h3><span class="ph">Phase 3</span> — First income
+        <span class="when">(Month 8–14, overlaps Phase 2)</span></h3>
+      <p class="goal">Goal: get money flowing in — this funds and validates everything.</p>
+      <ul>
+        <li><strong>Freelance micro-work:</strong> small sites, bug fixes, automations for local
+          Swiss businesses (huge advantage — local language + local presence).</li>
+        <li><strong>Open-source contributions</strong> → credibility.</li>
+        <li><strong>Internships / apprenticeships / junior roles</strong>, including Swiss
+          apprenticeship-style routes and entry roles at Swiss SMEs.</li>
+      </ul>
+      <blockquote><p>Even a few hundred CHF/month here is a psychological turning point: it proves
+        the skills convert to money and keeps the plan funded.</p></blockquote>
+      <div class="milestone"><b>Milestone:</b> first real paid project completed; one client
+        testimonial.</div>
+    </div>
+
+    <div class="phase">
+      <h3><span class="ph">Phase 4</span> — Computer-science depth
+        <span class="when">(Month 10–24, runs in parallel)</span></h3>
+      <p class="goal">Goal: stop being a "tutorial coder," become an engineer. This is the salary
+        unlock.</p>
+      <ul>
+        <li><a href="https://teachyourselfcs.com/">Teach Yourself CS</a> — the 9 core subjects, by
+          ROI: programming fundamentals → <strong>data structures &amp; algorithms</strong> →
+          computer architecture → <strong>databases &amp; data-intensive apps</strong> →
+          networking, OS, languages/compilers, distributed systems, math as needed.</li>
+        <li>"Degree-like" alternative:
+          <a href="https://github.com/ossu/computer-science">OSSU Computer Science</a>
+          (free, ~2 years at 20 hrs/week).</li>
+        <li>Grind algorithm problems (LeetCode patterns) <strong>only when job hunting</strong>, not
+          endlessly.</li>
+      </ul>
+      <div class="milestone"><b>Milestone:</b> can explain time complexity, design a database
+        schema, and pass a junior technical interview.</div>
+    </div>
+
+    <div class="phase">
+      <h3><span class="ph">Phase 5</span> — First salaried Swiss developer role
+        <span class="when">(Month 18–30)</span></h3>
+      <p class="goal">Goal: a full-time junior developer job at a Swiss company.</p>
+      <ul>
+        <li>Job boards: <strong>swissdevjobs.ch</strong> (stacks + salaries), jobs.ch, LinkedIn
+          (Switzerland filter), WeAreDevelopers, plus company career pages.</li>
+        <li>Many Swiss roles are <strong>hybrid</strong> — perfectly fine as a first job; it gets his
+          foot in the door and remote can follow.</li>
+        <li>Optimize the <strong>LinkedIn + GitHub + portfolio</strong> trio; Swiss recruiters search
+          these heavily.</li>
+        <li>Use the <strong>local-language advantage</strong> for roles international candidates
+          can't take.</li>
+      </ul>
+      <div class="milestone"><b>Milestone:</b> signed offer for a salaried developer role at a Swiss
+        company. Income now covers life + savings → the first real taste of financial freedom.</div>
+    </div>
+
+    <div class="phase">
+      <h3><span class="ph">Phase 6</span> — Specialize, raise comp, build leverage
+        <span class="when">(Year 2–3)</span></h3>
+      <p class="goal">Goal: go from "a junior" to "the person you want on the team."</p>
+      <ul>
+        <li>Deepen into a high-value niche: cloud/platform, data engineering, backend at scale,
+          security, or AI/ML engineering — all pay premiums in CH and are remote-friendly.</li>
+        <li>Earn 1–2 <strong>respected certifications</strong> if the niche rewards them.</li>
+        <li>Switch jobs every ~18–24 months early on if it meaningfully raises comp — the fastest
+          salary-growth lever in the first few years, and Swiss pay scales high.</li>
+        <li>Keep shipping visible work; start writing/speaking a little to build a name.</li>
+      </ul>
+      <div class="milestone"><b>Milestone:</b> mid-level engineer title and a salary comfortably
+        above living costs, with savings/investing in place.</div>
+    </div>
+
+    <div class="phase">
+      <h3><span class="ph">Phase 7</span> — Lock in the remote Swiss role
+        <span class="when">(Year 2–3+)</span></h3>
+      <p class="goal">Goal: convert proven experience into the original dream — remote (or
+        remote-heavy) work for a Swiss company at a Swiss salary.</p>
+      <ul>
+        <li><strong>Negotiate remote/hybrid</strong> in his current role once he's a trusted
+          performer (easiest path — most Swiss employers say yes to proven staff).</li>
+        <li><strong>Target remote-first Swiss companies</strong> directly when job-switching — common
+          now, and they pay full Swiss salaries to Swiss residents.</li>
+        <li>Optionally combine with <strong>cost-of-living flexibility within CH</strong> (live in a
+          cheaper canton, work remote for a Zurich/Geneva employer) to boost real savings.</li>
+      </ul>
+      <div class="milestone"><b>Milestone:</b> working remotely (or his preferred hybrid split) for
+        a Swiss company at a Swiss salary — the dream, now real because the skills, evidence, and
+        leverage are all in place.</div>
+    </div>
+  </section>
+
+  <section id="money">
+    <h2>Financial-freedom layer (runs the whole time)</h2>
+    <p>A Swiss tech salary is one of the strongest wealth engines in the world <em>if</em> the
+      spending gap is banked:</p>
+    <ul>
+      <li><strong>Bank the income gap.</strong> As pay rises (Swiss raises are large), keep lifestyle
+        flat for a while and save/invest the difference.</li>
+      <li><strong>Use the Swiss pillar system:</strong> max out <strong>Pillar 3a</strong>
+        (tax-advantaged retirement) and understand Pillar 2 — major, often-overlooked wealth tools
+        for Swiss earners. (Worth a session with a fee-only adviser.)</li>
+      <li><strong>Build a 6-month emergency fund</strong> before any risk (job changes).</li>
+      <li><strong>Invest the surplus</strong> (low-cost global index funds) rather than letting CHF
+        sit idle.</li>
+      <li><strong>Optional side income:</strong> freelance on top of a salary once skills are strong
+        — genuinely realistic in tech and accelerates freedom.</li>
+      <li><strong>Cost-of-living arbitrage within CH:</strong> a remote Swiss salary while living in a
+        cheaper canton is one of the fastest legitimate routes to financial independence available
+        anywhere.</li>
+    </ul>
+  </section>
+
+  <section id="rhythm">
+    <h2>Suggested weekly rhythm (sustainable, not heroic)</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Block</th><th>Hours/week</th><th>What</th></tr></thead>
+        <tbody>
+          <tr><td>Structured learning</td><td>5–8</td><td>CS50 / track course / Teach-Yourself-CS reading</td></tr>
+          <tr><td>Building / projects</td><td>4–6</td><td>Portfolio + (later) paid work</td></tr>
+          <tr><td>Problem practice</td><td>2–3</td><td>Exercism / LeetCode patterns</td></tr>
+          <tr><td>Community / job stuff</td><td>1–2</td><td>Open source, meetups, applications</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>~12–18 focused hrs/week sustains real progress without burnout. Consistency beats intensity.</p>
+  </section>
+
+  <section id="checklist">
+    <h2>Milestone checklist (the whole journey on one page)</h2>
+    <ul class="check">
+      <li><b>P0</b> GitHub created, weekly schedule locked, first tiny program shipped</li>
+      <li><b>P1</b> CS50x completed, comfortable with Git</li>
+      <li><b>P2</b> One track chosen, 3 deployed portfolio projects, CV written</li>
+      <li><b>P3</b> First paid project + testimonial (income proof)</li>
+      <li><b>P4</b> DS&amp;A solid, can pass a junior technical interview</li>
+      <li><b>P5</b> Signed junior developer offer at a Swiss company</li>
+      <li><b>P6</b> Mid-level title, niche specialization, savings/investing started</li>
+      <li><b>P7</b> Remote/hybrid Swiss role at a Swiss salary — the dream</li>
+    </ul>
+  </section>
+
+  <section id="resources">
+    <h2>Curated starter resources</h2>
+    <ul>
+      <li><strong>CS50x</strong> — Harvard's free intro, the best on-ramp.</li>
+      <li><strong>freeCodeCamp</strong> — free, project-based, great for the web track.</li>
+      <li><a href="https://roadmap.sh">roadmap.sh</a> — visual roadmaps for every track.</li>
+      <li><a href="https://teachyourselfcs.com/">Teach Yourself CS</a> — the depth curriculum.</li>
+      <li><a href="https://github.com/ossu/computer-science">OSSU</a> — full free CS "degree."</li>
+      <li><strong>Exercism</strong> — free mentored practice; <strong>LeetCode</strong> — interview prep.</li>
+      <li><strong>Swiss job boards:</strong> swissdevjobs.ch, jobs.ch, LinkedIn (CH filter), WeAreDevelopers.</li>
+    </ul>
+    <hr>
+    <h3>A note on mindset</h3>
+    <p>The single biggest predictor of success isn't talent — it's <strong>showing up weekly for
+      years</strong> and <strong>shipping visible work</strong>. The plan is deliberately front-loaded
+      with small wins (first program, first deployed project, first paid gig) so motivation and money
+      arrive early and keep the engine running. And because he's already a Swiss resident national,
+      the finish line — a remote Swiss job at a Swiss salary — is not a long shot. It's the natural
+      outcome of becoming a good engineer where he already lives.</p>
+    <p class="note">Sources for the market facts in this plan: Swiss &amp; junior salary data (2026)
+      — Glassdoor, PayScale, Levels.fyi, swissdevjobs.ch. Learning curricula — teachyourselfcs.com,
+      OSSU, roadmap.sh.</p>
+  </section>
+
+</main>
+
+<footer class="page">
+  Remote IT Career &amp; Financial-Freedom Plan &nbsp;&bull;&nbsp; Generated June 2026
+</footer>
+
+</body>
+</html>
