@@ -1,0 +1,52 @@
+name: Deploy career plan to GitHub Pages
+
+# Publishes the self-contained career-plan page to GitHub Pages.
+# Served at the project URL (https://<owner>.github.io/<repo>/) so it does NOT
+# interfere with the serhatdereli.me domain or the PHP site.
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'public/career-plan.html'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow one concurrent deployment; don't cancel an in-progress production deploy.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Stage site (career plan becomes the index page)
+        run: |
+          mkdir -p _site
+          cp public/career-plan.html _site/index.html
+
+      - name: Configure Pages (auto-enables Pages on first run)
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
