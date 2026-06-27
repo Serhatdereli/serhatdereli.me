@@ -188,18 +188,6 @@
   .agenda-item .ico{flex:0 0 auto}
   .agenda-item .body{flex:1}
 
-  /* Lock screen */
-  #lockScreen{position:fixed; inset:0; z-index:1000; background:linear-gradient(135deg,var(--hero1),var(--hero2));
-    display:flex; align-items:center; justify-content:center; padding:24px}
-  #lockScreen.hidden{display:none}
-  .lock-card{background:var(--card); border-radius:16px; padding:32px 28px; max-width:360px; width:100%;
-    text-align:center; box-shadow:0 18px 50px rgba(0,0,0,.35)}
-  .lock-card h2{margin:.1em 0 .3em}
-  .lock-card p{color:var(--muted); font-size:.9rem; margin:0 0 16px}
-  .lock-card input{width:100%; text-align:center; font-size:1.05rem; margin-bottom:12px}
-  .lock-card .btn{width:100%; justify-content:center}
-  #lockErr{display:none; color:#b13b3b; font-size:.85rem; margin-top:12px}
-
   @media (max-width:600px){
     .hero h1{font-size:1.7rem}
     section.card{padding:20px 18px}
@@ -211,17 +199,6 @@
 </style>
 </head>
 <body>
-
-<div id="lockScreen">
-  <div class="lock-card">
-    <div style="font-size:2.4rem">🔒</div>
-    <h2>Life Hub</h2>
-    <p>Enter your passcode to open your private hub.</p>
-    <input id="lockPass" type="password" placeholder="Passcode" autocomplete="current-password" aria-label="Passcode">
-    <button class="btn" data-action="unlock">Unlock</button>
-    <div id="lockErr">Wrong passcode — try again.</div>
-  </div>
-</div>
 
 <header class="hero">
   <div class="wrap">
@@ -757,7 +734,6 @@ function dataCard(){
       '<button class="btn sm ghost" data-action="set-name">Set your name</button>'+
       '<button class="btn sm ghost" data-action="toggle-locale">Locale: '+esc(L().label)+'</button>'+
       '<button class="btn sm ghost" data-action="mask-toggle">'+(state.settings.maskMoney?"👁 Show amounts":"🙈 Hide amounts")+'</button>'+
-      '<button class="btn sm ghost" data-action="lock-now">🔒 Lock</button>'+
       '<button class="btn sm warn" data-action="reset">Reset everything</button>'+
     '</div>'+
     '<input type="file" id="importFile" accept="application/json,.json" class="hidden">'+
@@ -975,8 +951,6 @@ document.addEventListener("click", function(ev){
     case "fine-email": fineEmail(id); break;
     case "review-ics": reviewIcs(); break;
     case "mask-toggle": state.settings.maskMoney=!state.settings.maskMoney; save(); render(); break;
-    case "unlock": tryUnlock(); break;
-    case "lock-now": lockNow(); break;
     case "set-name": setName(); break;
     case "toggle-locale": toggleLocale(); break;
     case "reset": resetAll(); break;
@@ -989,7 +963,6 @@ document.addEventListener("change", function(ev){
 document.addEventListener("keydown", function(ev){
   if(ev.key==="Enter"){
     var id=ev.target.id;
-    if(id==="lockPass"){ tryUnlock(); return; }
     if(id==="fine_payby"||id==="fine_ref"||id==="fine_issuer"||id==="fine_amount") addFine();
     else if(id==="bill_name"||id==="bill_amount"||id==="bill_due") addBill();
     else if(id==="admin_title"||id==="admin_due") addAdmin();
@@ -1125,33 +1098,12 @@ function fineEmail(id){ var f=find("fines",id); if(!f) return; var subj, body;
   try{ window.location.href="mailto:?subject="+encodeURIComponent(subj)+"&body="+encodeURIComponent(body); }catch(e){ toast("Couldn't open your email app"); }
 }
 
-/* ====================== PASSCODE GATE (light, client-side) ====================== */
-/* This deters casual access to the dashboard UI. It is NOT bank-grade security:
-   the page is static, so a determined person could bypass it. Your real data is
-   never exposed regardless — it lives only in this browser's localStorage. */
-function cyrb53(str, seed){ seed=seed>>>0; var h1=0xdeadbeef^seed, h2=0x41c6ce57^seed;
-  for(var i=0,ch;i<str.length;i++){ ch=str.charCodeAt(i); h1=Math.imul(h1^ch,2654435761); h2=Math.imul(h2^ch,1597334677); }
-  h1=Math.imul(h1^(h1>>>16),2246822507); h1^=Math.imul(h2^(h2>>>13),3266489909);
-  h2=Math.imul(h2^(h2>>>16),2246822507); h2^=Math.imul(h1^(h1>>>13),3266489909);
-  return (4294967296*(2097151&h2)+(h1>>>0)).toString(16); }
-function hashPass(p){ var s="serhat.hub.salt.v1|"+String(p); for(var i=0;i<20000;i++){ s=cyrb53(s, i); } return s; }
-var PASS_HASH = "7bdd773b03d4d"; // hash of your passcode — to change it, see life-admin/HUB-GUIDE.md
-var UNLOCK_KEY = "serhat.hub.unlocked.v1";
-function isUnlocked(){ try{ return localStorage.getItem(UNLOCK_KEY)==="1"; }catch(e){ return false; } }
-function showLock(){ var el=document.getElementById("lockScreen"); if(el){ el.classList.remove("hidden"); document.body.style.overflow="hidden"; var i=document.getElementById("lockPass"); if(i){ i.value=""; try{ i.focus(); }catch(e){} } } }
-function hideLock(){ var el=document.getElementById("lockScreen"); if(el){ el.classList.add("hidden"); document.body.style.overflow=""; } }
-function tryUnlock(){ var v=(document.getElementById("lockPass")||{}).value||"";
-  if(hashPass(v)===PASS_HASH){ try{ localStorage.setItem(UNLOCK_KEY,"1"); }catch(e){} hideLock(); }
-  else { var e=document.getElementById("lockErr"); if(e) e.style.display="block"; } }
-function lockNow(){ try{ localStorage.removeItem(UNLOCK_KEY); }catch(e){} showLock(); }
-
 /* ---- init ---- */
 state.lastOpened=new Date().toISOString();
 // weekly review auto-reset on new week
 if(state.moneyReview.weekReset!==weekOf()){ state.moneyReview.tasks=[false,false,false,false]; state.moneyReview.weekReset=weekOf(); }
 save();
 render();
-if(isUnlocked()) hideLock(); else showLock();
 
 // PWA: register the service worker only when served over http(s) — never on file://
 if('serviceWorker' in navigator && location.protocol.indexOf('http')===0){
