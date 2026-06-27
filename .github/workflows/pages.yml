@@ -35,23 +35,17 @@ jobs:
       - name: Stage static site
         run: |
           mkdir -p _site/goal
-          # Homepage at root
+          # Homepage at the root
           cp pages/index.html              _site/index.html
-          # The Life Hub app at /goal/ (clean URL)
-          cp public/life-hub.html          _site/goal/index.html
-          # Also keep it at /life-hub.html (service-worker cache + direct link)
+          # The Life Hub app + its assets, all at the root (relative paths resolve here)
           cp public/life-hub.html          _site/life-hub.html
           cp public/serhat-plan.html       _site/serhat-plan.html
-          # PWA + favicon at root
           cp public/icon.svg public/manifest.webmanifest public/sw.js public/favicon.ico _site/
-          # Copies inside /goal/ so the Hub's relative manifest/icon links resolve there too
-          cp public/icon.svg public/manifest.webmanifest _site/goal/
-          # Site assets (CSS/images for the homepage)
           cp -r public/assets              _site/assets
-          # Custom domain
-          echo "serhatdereli.me" > _site/CNAME
-          # (Deliberately NOT published: index.php, controllers, the PHP framework,
-          #  public/tests/ phpinfo, and the friend's career-plan.html.)
+          # /goal/ is a friendly entry that redirects to the Hub (works at any base path)
+          printf '%s' '<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="refresh" content="0; url=../life-hub.html"><link rel="canonical" href="../life-hub.html"><title>Life Hub</title></head><body><a href="../life-hub.html">Open the Life Hub &rarr;</a></body></html>' > _site/goal/index.html
+          # No CNAME: served at the GitHub Pages project URL. (Add a CNAME + DNS for a custom domain.)
+          # (Not published: index.php, the PHP framework, public/tests/ phpinfo, the friend's career-plan.html.)
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
