@@ -13,47 +13,12 @@ templates in this `life-admin/` folder remain the detailed reference.
   browser's **Install** / "Add to Home Screen" option. It then opens in its own
   window with its own icon, like a desktop/phone app, and works offline.
 
-## The passcode lock
+## Privacy
 
-The Hub opens behind a passcode screen. Once you unlock on a device, it stays
-unlocked there until you tap **🔒 Lock** (in the *Your data & privacy* card).
-
-> ⚠️ **What the lock is and isn't.** It deters casual access to the dashboard on
-> a shared screen. It is **not** strong security — the page is static, so the
-> check runs in your browser and a determined person could bypass it. That's
-> fine here because **your real data never leaves your browser** (it's in
-> `localStorage`); there's nothing sensitive in the page itself to steal.
-> Because of that, **don't reuse an important password** for this — pick a
-> simple passcode you don't use elsewhere.
-
-### Changing the passcode
-
-1. Open the Hub in a browser and open the **developer console** (F12 → Console).
-2. Run: `hashPass('your-new-passcode')` and copy the short string it prints.
-3. In `public/life-hub.html`, find `var PASS_HASH = "...";` and replace the value
-   with what you copied. Save, commit, redeploy.
-
-(Your plaintext passcode is never stored anywhere — only this one-way hash is.)
-
-### Server login at `/goal` (PHP host)
-
-If `serhatdereli.me` runs on a PHP host, the `/goal` URL is also protected by a
-real **HTTP Basic Auth** login (a browser username/password prompt):
-
-- **Username:** `SerhatDereli`
-- **Password:** the one you set.
-
-This is true server-side protection — the page isn't sent until you log in. After
-that, the in-page passcode screen is skipped automatically (so it's one login,
-not two). Only a bcrypt hash of the password is stored in
-`controllers/DefaultController.php` (never the plaintext). To change it, run
-`php -r "echo password_hash('NEW-PASSWORD', PASSWORD_BCRYPT);"` and paste the
-result into the `$hash` line of `DefaultController::goal()`.
-
-> If the login prompt ever loops on a FastCGI/PHP-FPM host (the `Authorization`
-> header isn't passed through), add this one line to a `.htaccess` in the web
-> root: `CGIPassAuth On` (Apache 2.4.13+), or
-> `SetEnvIf Authorization "(.*)" HTTP_AUTHORIZATION=$1`.
+There's no login — the Hub opens directly. That's fine because **your data lives
+only in your browser** (`localStorage`): it's never uploaded, never stored in the
+repo, and not visible to anyone who loads the page (they'd just see an empty
+template). Use **⬇ Export backup** now and then to keep a copy somewhere safe.
 
 ## Features
 
