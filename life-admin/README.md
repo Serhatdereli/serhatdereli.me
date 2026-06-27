@@ -21,7 +21,7 @@ progress ring, your fines/bills/career in one place, and a "what's left" view.
   and then to save a JSON copy somewhere safe.
 - It's **local-only by design**: this repo no longer deploys anything to the
   public web, so nothing here is viewable by anyone but you.
-- The Hub links to your career plan (`career-plan.html`) and echoes the
+- The Hub links to your personal plan (`serhat-plan.html`) and echoes the
   actionable parts of these trackers; the detailed templates below stay the
   source of truth for amounts, deadlines and letter drafts.
 

@@ -33,6 +33,22 @@ class DefaultController extends Controller
 		$tpl->display();
 	}
 
+	public static function goal()
+	{
+		// Serve the self-contained Life Hub app at the friendly /goal URL.
+		// It's a standalone HTML document (not a Smarty template), so output it raw.
+		$file = $_SERVER['DOCUMENT_ROOT'] . '/life-hub.html';
+		if (is_file($file))
+		{
+			header('Content-Type: text/html; charset=utf-8');
+			readfile($file);
+		}
+		else
+		{
+			header($_SERVER['SERVER_PROTOCOL'] . ' 404 Not Found');
+		}
+	}
+
 	public static function markdown()
 	{
 		$tpl = Template::create('pages/markdown-test.tpl');

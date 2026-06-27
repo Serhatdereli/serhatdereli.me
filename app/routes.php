@@ -21,6 +21,9 @@ $router->map('GET', '/hello/[a:name]/[a:say]', 'DefaultController::hello');
 
 $router->map('GET', '/markdown', 'DefaultController::markdown');
 
+// Life Hub — your private, browser-only life-organization app (served at /goal)
+$router->map('GET', '/goal', 'DefaultController::goal');
+
 /**
  * Function that handles the AltoRouter object - must be present in order for your routes to work
  * @param AltoRouter $router

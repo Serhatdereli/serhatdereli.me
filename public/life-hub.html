@@ -5,6 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Life Hub — your private main brain</title>
 <meta name="description" content="A calm, private, browser-only dashboard: do a 60-second check-in, see how far you've come, and know the one or two things worth doing right now — money deadlines first.">
+<!-- Installable web/desktop app (PWA). These only apply when served (http/https); opening the file directly still works fully offline. -->
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#1f2933">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Life Hub">
 <style>
   :root{
     --ink:#2b2f33; --muted:#6b7178; --line:#e6e8eb; --bg:#f6f7f9;
@@ -189,7 +197,7 @@
     <div class="lede">Your private main brain. Open it, see where you are, do the next thing. Everything you type stays on this device — never uploaded, never published.</div>
     <div class="chips" id="heroChips"></div>
     <div style="margin-top:20px"><button class="btn big secondary" data-action="open-checkin">✓ Check in (60 sec)</button></div>
-    <div class="links"><a href="career-plan.html">Open the full career plan →</a></div>
+    <div class="links"><a href="serhat-plan.html">Open your plan →</a></div>
   </div>
 </header>
 
@@ -246,7 +254,7 @@
    ========================================================================== */
 
 var STORAGE_KEY = "serhat.hub.v1";
-var SCHEMA_VERSION = 1;
+var SCHEMA_VERSION = 2;
 
 /* ---- Locale presets (UK default; switchable to CH) ---- */
 var LOCALES = {
@@ -276,18 +284,6 @@ var LOCALES = {
       "Book the appointment you've been avoiding (doctor, dentist, admin)"]
   }
 };
-
-/* ---- Career milestones: verbatim from career-plan.html ---- */
-var CAREER_MS = [
-  ["P0","GitHub created, weekly schedule locked, first tiny program shipped"],
-  ["P1","CS50x completed, comfortable with Git"],
-  ["P2","One track chosen, 3 deployed portfolio projects, CV written"],
-  ["P3","First paid project + testimonial (income proof)"],
-  ["P4","DS&A solid, can pass a junior technical interview"],
-  ["P5","Signed junior developer offer at a Swiss company"],
-  ["P6","Mid-level title, niche specialization, savings/investing started"],
-  ["P7","Remote/hybrid Swiss role at a Swiss salary — the dream"]
-];
 
 /* ---- Utilities ---- */
 function uid(p){
@@ -346,7 +342,14 @@ function defaultState(){
     debts: [],
     money: { cashAvailable:null, lastSnapshotDate:null },
     moneyReview: { tasks:[false,false,false,false], weekReset: weekOf(), log:[] },
-    career: { currentPhase:"P0", done:{}, hoursLog:[] },
+    goals: [
+      { id:"g_seed0", title:"Get finances out of the red & run a weekly money review", due:null, done:false, doneAt:null, note:"", seed:true },
+      { id:"g_seed1", title:"Build a steady freelance income baseline", due:null, done:false, doneAt:null, note:"", seed:true },
+      { id:"g_seed2", title:"Land a strong software role in London", due:null, done:false, doneAt:null, note:"", seed:true },
+      { id:"g_seed3", title:"Refresh CV, LinkedIn & GitHub", due:null, done:false, doneAt:null, note:"", seed:true },
+      { id:"g_seed4", title:"Ship one portfolio project (live URL)", due:null, done:false, doneAt:null, note:"", seed:true },
+      { id:"g_seed5", title:"Build a 3-month emergency buffer", due:null, done:false, doneAt:null, note:"", seed:true }
+    ],
     admin: loc.adminSeeds.map(function(t,i){ return { id:"a_seed"+i, title:t, due:null, done:false, doneAt:null, notes:"", seed:true }; })
   };
 }
@@ -405,7 +408,7 @@ function areaProgress(){
   // "done" progress (only their deadlines matter, surfaced via Today / What's left).
   // Debts that are cleared DO count. This keeps a brand-new Hub honestly at 0%.
   A.debts = tally(state.debts, function(x){ return x.status==="cleared"; });
-  A.career = tally(CAREER_MS, function(m){ return !!state.career.done[m[0]]; });
+  A.goals = tally(state.goals, function(g){ return g.done; });
   A.admin = tally(state.admin, function(t){ return t.done; });
   return A;
 }
@@ -445,10 +448,10 @@ function todayItems(){
   // 5) weekly money review due
   if(out.length<3 && reviewDue())
     out.push({ ico:"🧮", title:"Do your 15-minute money review", sub:"keeps you ahead — quick and calm", area:"review" });
-  // 6) next career milestone
+  // 6) next goal
   if(out.length<3){
-    for(var i=0;i<CAREER_MS.length;i++){ if(!state.career.done[CAREER_MS[i][0]]){
-      out.push({ ico:"🚀", title:"Career: "+CAREER_MS[i][0]+" — "+esc(CAREER_MS[i][1]), sub:"one small step counts", area:"career" }); break; } }
+    var g=state.goals.filter(function(x){ return !x.done; })[0];
+    if(g) out.push({ ico:"🎯", title:esc(g.title), sub:"one small step counts", area:"goals" });
   }
   return out.slice(0,3);
 }
@@ -469,8 +472,8 @@ function leftItems(){
     items.push({ico:"💰", area:"Bills", text:esc(b.name)+" (behind)", due:b.nextDue}); });
   state.debts.filter(function(d){return d.status!=="cleared";}).forEach(function(d){
     items.push({ico:"💳", area:"Debts", text:esc(d.name)+" "+(d.balance?money(d.balance):""), due:d.nextDue}); });
-  CAREER_MS.forEach(function(m){ if(!state.career.done[m[0]])
-    items.push({ico:"🚀", area:"Career", text:m[0]+" — "+esc(m[1]), due:null}); });
+  state.goals.filter(function(g){return !g.done;}).forEach(function(g){
+    items.push({ico:"🎯", area:"Goals", text:esc(g.title), due:g.due||null}); });
   state.admin.filter(function(t){return !t.done;}).forEach(function(t){
     items.push({ico:"🗂️", area:"Admin", text:esc(t.title), due:t.due}); });
   items.sort(function(a,b){
@@ -522,7 +525,7 @@ function renderProgress(){
   var rows=[
     {k:"fines",  name:"🅿️ Fines",         scroll:"fines"},
     {k:"debts",  name:"💰 Debts",          scroll:"money"},
-    {k:"career", name:"🚀 Career (P0–P7)", scroll:"career"},
+    {k:"goals",  name:"🎯 Goals",          scroll:"goals"},
     {k:"admin",  name:"🗂️ Life Admin",     scroll:"admin"}
   ];
   var html="";
@@ -561,7 +564,7 @@ function renderAreas(){
   html+=finesCard();
   html+=billsCard();
   html+=reviewCard();
-  html+=careerCard();
+  html+=goalsCard();
   html+=adminCard();
   html+=dataCard();
   document.getElementById("view-areas").innerHTML=html;
@@ -671,19 +674,22 @@ function reviewCard(){
     '<div class="quick-add"><button class="btn sm" data-action="finish-review">Finish review &amp; log it</button></div></section>';
 }
 
-function careerCard(){
-  var rows=CAREER_MS.map(function(m){
-    var done=!!state.career.done[m[0]];
-    var cls=(state.career.currentPhase===m[0])?"area-pin":"";
-    return '<div class="item '+(done?"done":"")+'" style="'+(state.career.currentPhase===m[0]?"background:var(--amber-bg);border-radius:8px;padding-left:8px;":"")+'">'+
-      '<button type="button" class="chk" data-action="ms-toggle" data-p="'+m[0]+'" aria-pressed="'+done+'" aria-label="Toggle milestone '+m[0]+'">'+(done?"✓":"")+'</button>'+
-      '<div class="body"><div class="title"><b class="check-glyph">'+m[0]+'</b> '+esc(m[1])+'</div></div>'+
-      '<div class="acts"><button class="btn sm ghost" data-action="set-phase" data-p="'+m[0]+'" title="Set as current phase">◎</button></div></div>';
-  }).join("");
-  return '<section class="card" id="area-career"><div class="row-end"><h2><span class="ico">🚀</span>Tech career (P0–P7)</h2>'+
-    '<a class="small" href="career-plan.html">Open the full plan →</a></div>'+
-    '<p class="muted small">Your 8 milestones, live. ◎ marks your current phase. Detail lives in the full plan.</p>'+
-    rows+'</section>';
+function goalsCard(){
+  var goals=state.goals.slice().sort(function(a,b){ if(a.done!==b.done) return a.done?1:-1;
+    return (a.due?daysFromToday(a.due):9999)-(b.due?daysFromToday(b.due):9999); });
+  var rows=goals.length? goals.map(function(g){
+    var n=g.due?daysFromToday(g.due):null;
+    var badge=n!=null? (n<0?'<span class="badge overdue">'+countdown(g.due)+'</span>':'<span class="muted small">'+countdown(g.due)+'</span>'):'';
+    return '<div class="item '+(g.done?"done":"")+'"><button type="button" class="chk" data-action="goal-toggle" data-id="'+g.id+'" aria-pressed="'+g.done+'" aria-label="Toggle goal">'+(g.done?"✓":"")+'</button>'+
+      '<div class="body"><div class="title">'+esc(g.title)+'</div><div class="sub">'+badge+'</div></div>'+
+      '<div class="acts"><button class="btn sm ghost" data-action="del-goal" data-id="'+g.id+'">✕</button></div></div>';
+  }).join("") : '<p class="muted small">No goals yet — add the things you\'re working toward.</p>';
+  return '<section class="card" id="area-goals"><div class="row-end"><h2><span class="ico">🎯</span>Goals &amp; milestones</h2>'+
+    '<a class="small" href="serhat-plan.html">Open your full plan →</a></div>'+
+    '<p class="muted small">The things you\'re working toward. The bigger picture lives in your 12-month plan.</p>'+
+    rows+
+    '<div class="form-grid">'+field("goal_title","Goal","text","e.g. Refresh CV & GitHub")+field("goal_due","Target date (optional)","date","")+'</div>'+
+    '<div class="quick-add"><button class="btn sm" data-action="add-goal">+ Add goal</button></div></section>';
 }
 
 function adminCard(){
@@ -720,7 +726,7 @@ function dataCard(){
 
 function renderLeft(){
   var items=leftItems();
-  var areas=["all","Fines","Bills","Debts","Career","Admin"];
+  var areas=["all","Fines","Bills","Debts","Goals","Admin"];
   var chips=areas.map(function(a){ return '<button class="pill" data-action="left-filter" data-val="'+a+'" aria-pressed="'+(leftFilter===a)+'">'+(a==="all"?"All":a)+'</button>'; }).join(" ");
   var filtered = leftFilter==="all"? items : items.filter(function(i){ return i.area===leftFilter; });
   var rows = filtered.length? filtered.map(function(i){
@@ -872,8 +878,9 @@ document.addEventListener("click", function(ev){
       state.moneyReview.tasks[Number(t.getAttribute("data-i"))]=!!state.moneyReview.tasks[Number(t.getAttribute("data-i"))]; save(); render(); break;
     case "finish-review": finishReview(); break;
 
-    case "ms-toggle": toggleMilestone(t.getAttribute("data-p")); break;
-    case "set-phase": state.career.currentPhase=t.getAttribute("data-p"); save(); render(); toast("Current phase: "+t.getAttribute("data-p")); break;
+    case "goal-toggle": toggleGoal(id); break;
+    case "add-goal": addGoal(); break;
+    case "del-goal": delFrom("goals", id); break;
 
     case "add-admin": addAdmin(); break;
     case "admin-toggle": toggleAdmin(id); break;
@@ -897,6 +904,7 @@ document.addEventListener("keydown", function(ev){
     else if(id==="bill_name"||id==="bill_amount"||id==="bill_due") addBill();
     else if(id==="admin_title"||id==="admin_due") addAdmin();
     else if(id==="debt_name"||id==="debt_bal"||id==="debt_owed") addDebt();
+    else if(id==="goal_title"||id==="goal_due") addGoal();
   }
 });
 
@@ -914,7 +922,7 @@ function setView(v){
 }
 function gotoArea(key){
   setView("areas");
-  var map={fines:"area-fines", money:"area-money", review:"area-review", career:"area-career", admin:"area-admin", data:"area-data"};
+  var map={fines:"area-fines", money:"area-money", review:"area-review", goals:"area-goals", admin:"area-admin", data:"area-data"};
   var el=document.getElementById(map[key]||("area-"+key));
   if(el){ el.scrollIntoView({behavior: motionOff()?"auto":"smooth", block:"start"});
     el.style.boxShadow="0 0 0 3px #cfe0f7"; setTimeout(function(){ el.style.boxShadow=""; },1200); }
@@ -953,7 +961,8 @@ function finishReview(){
   markCheckinToday();
   save(); render(); toast("Review logged ✓ — that counts as today's check-in.");
 }
-function toggleMilestone(p){ state.career.done[p]=!state.career.done[p]; save(); render(); if(state.career.done[p]) toast(p+" done. 🎯"); }
+function toggleGoal(id){ var g=find("goals",id); if(!g) return; g.done=!g.done; g.doneAt=g.done?new Date().toISOString():null; save(); render(); if(g.done) toast("Goal done. 🎯"); }
+function addGoal(){ var title=val("goal_title"); if(!title){ toast("Describe the goal"); return; } state.goals.push({id:uid("g_"), title:title, due:val("goal_due")||null, done:false, doneAt:null, note:"", seed:false}); save(); render(); toast("Goal added"); }
 function addAdmin(){
   var title=val("admin_title"); if(!title){ toast("Describe the task"); return; }
   state.admin.push({id:uid("a_"), title:title, due:val("admin_due")||null, done:false, doneAt:null, notes:"", seed:false});
@@ -988,6 +997,11 @@ state.lastOpened=new Date().toISOString();
 if(state.moneyReview.weekReset!==weekOf()){ state.moneyReview.tasks=[false,false,false,false]; state.moneyReview.weekReset=weekOf(); }
 save();
 render();
+
+// PWA: register the service worker only when served over http(s) — never on file://
+if('serviceWorker' in navigator && location.protocol.indexOf('http')===0){
+  try{ navigator.serviceWorker.register('/sw.js').catch(function(){}); }catch(e){}
+}
 </script>
 </body>
 </html>
