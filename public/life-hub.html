@@ -71,10 +71,10 @@
   nav.tabs .wrap{display:flex; gap:4px; padding-top:8px; padding-bottom:0}
   .tab{appearance:none; border:none; background:transparent; color:var(--muted); font-weight:600;
     padding:12px 16px; border-bottom:3px solid transparent; font-size:.95rem}
-  .tab[aria-selected="true"]{color:var(--accent); border-bottom-color:var(--accent)}
+  .tab[aria-pressed="true"]{color:var(--accent); border-bottom-color:var(--accent)}
   .tab .count{display:inline-block; min-width:20px; padding:0 6px; margin-left:6px; font-size:.75rem;
     background:var(--line); color:var(--muted); border-radius:999px; font-weight:700}
-  .tab[aria-selected="true"] .count{background:var(--accent); color:#fff}
+  .tab[aria-pressed="true"] .count{background:var(--accent); color:#fff}
 
   /* Progress ring */
   .progress-row{display:flex; gap:28px; align-items:center; flex-wrap:wrap}
@@ -111,7 +111,7 @@
   /* List items (fines, bills, tasks) */
   .item{display:flex; gap:12px; align-items:flex-start; padding:13px 0; border-bottom:1px solid var(--line)}
   .item:last-child{border-bottom:none}
-  .item .chk{flex:0 0 auto; width:24px; height:24px; border:2px solid var(--accent); border-radius:6px;
+  .item .chk{flex:0 0 auto; width:24px; height:24px; padding:0; font:inherit; line-height:1; border:2px solid var(--accent); border-radius:6px;
     background:#fff; color:var(--accent); display:flex; align-items:center; justify-content:center; font-size:1rem; cursor:pointer}
   .item.done .chk{background:var(--accent-2); border-color:var(--accent-2); color:#fff}
   .item .body{flex:1; min-width:0}
@@ -133,6 +133,7 @@
   input[type=text], input[type=number], input[type=date], select, textarea{
     font:inherit; padding:9px 11px; border:1px solid var(--line); border-radius:8px; background:#fff; color:var(--ink); max-width:100%}
   input:focus, select:focus, textarea:focus{outline:2px solid #cfe0f7; outline-offset:0; border-color:var(--accent)}
+  .btn:focus-visible,.tab:focus-visible,.pill:focus-visible,.mood:focus-visible,.chk:focus-visible,.bar-row:focus-visible{outline:2px solid #1f5fbf; outline-offset:2px}
   .form-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin-top:12px}
   .field label{display:block; font-size:.78rem; color:var(--muted); margin-bottom:3px; text-transform:uppercase; letter-spacing:.03em}
   .field input, .field select{width:100%}
@@ -194,9 +195,9 @@
 
 <nav class="tabs">
   <div class="wrap">
-    <button class="tab" id="tab-today" data-view="today" aria-selected="true">Today</button>
-    <button class="tab" id="tab-areas" data-view="areas" aria-selected="false">All areas</button>
-    <button class="tab" id="tab-left" data-view="left" aria-selected="false">What's left <span class="count" id="leftCount">0</span></button>
+    <button class="tab" id="tab-today" data-view="today" aria-pressed="true">Today</button>
+    <button class="tab" id="tab-areas" data-view="areas" aria-pressed="false">All areas</button>
+    <button class="tab" id="tab-left" data-view="left" aria-pressed="false">What's left <span class="count" id="leftCount">0</span></button>
   </div>
 </nav>
 
@@ -381,6 +382,9 @@ function loadState(){
 }
 var state = loadState();
 var saveWarned=false;
+// Honor the OS "reduce motion" setting (the stored flag alone isn't reachable from the UI).
+var prefersReducedMotion = (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) || false;
+function motionOff(){ return !!((state.settings && state.settings.reduceMotion) || prefersReducedMotion); }
 function save(){
   state.updatedAt=new Date().toISOString();
   try{
@@ -397,7 +401,10 @@ function fineResolved(f){ return f.status==="paid"||f.status==="contested"||f.st
 function areaProgress(){
   var A={};
   A.fines = tally(state.fines, fineResolved);
-  A.bills = tally(state.bills.concat(state.debts), function(x){ return x.status==="ok"||x.status==="cleared"; });
+  // Bills are recurring obligations, not completable tasks, so they never count as
+  // "done" progress (only their deadlines matter, surfaced via Today / What's left).
+  // Debts that are cleared DO count. This keeps a brand-new Hub honestly at 0%.
+  A.debts = tally(state.debts, function(x){ return x.status==="cleared"; });
   A.career = tally(CAREER_MS, function(m){ return !!state.career.done[m[0]]; });
   A.admin = tally(state.admin, function(t){ return t.done; });
   return A;
@@ -512,12 +519,17 @@ function renderProgress(){
     o.pct<81? "More than halfway in places." : o.pct<100? "Almost there." : "All clear. Breathe.";
   document.getElementById("progBand").textContent=band;
   var A=areaProgress();
-  var names={fines:"🅿️ Fines", bills:"💰 Bills & Debts", career:"🚀 Career (P0–P7)", admin:"🗂️ Life Admin"};
+  var rows=[
+    {k:"fines",  name:"🅿️ Fines",         scroll:"fines"},
+    {k:"debts",  name:"💰 Debts",          scroll:"money"},
+    {k:"career", name:"🚀 Career (P0–P7)", scroll:"career"},
+    {k:"admin",  name:"🗂️ Life Admin",     scroll:"admin"}
+  ];
   var html="";
-  ["fines","bills","career","admin"].forEach(function(k){
-    var a=A[k], pct=a.total? Math.round(a.done/a.total*100):0;
+  rows.forEach(function(r){
+    var a=A[r.k], pct=a.total? Math.round(a.done/a.total*100):0;
     var val=a.total? (a.done+" of "+a.total) : "add your first item";
-    html+='<div class="bar-row" data-scroll="'+k+'"><span class="lbl">'+names[k]+'</span>'+
+    html+='<div class="bar-row" data-scroll="'+r.scroll+'"><span class="lbl">'+r.name+'</span>'+
       '<span class="val">'+val+'</span>'+
       '<span class="bar-track"><span class="bar-fill '+(pct===100&&a.total?"done":"")+'" style="width:'+pct+'%"></span></span></div>';
   });
@@ -570,7 +582,7 @@ function finesCard(){
        n!=null && n<=14? '<span class="badge due-soon">'+countdown(f.payByDate)+'</span>' :
        n!=null? '<span class="badge">'+countdown(f.payByDate)+'</span>':'');
     rows+='<div class="item '+(resolved?"done":"")+'">'+
-      '<div class="chk" data-action="fine-toggle" data-id="'+f.id+'" title="Mark paid">'+(resolved?"✓":"")+'</div>'+
+      '<button type="button" class="chk" data-action="fine-toggle" data-id="'+f.id+'" aria-pressed="'+resolved+'" aria-label="Mark fine paid">'+(resolved?"✓":"")+'</button>'+
       '<div class="body"><div class="title">'+money(f.amount)+' · '+(esc(f.issuer)||"Unknown issuer")+'</div>'+
       '<div class="sub">'+badge+(f.ref?'<span class="muted">ref '+esc(f.ref)+'</span>':"")+
         decisionPills(f)+'</div></div>'+
@@ -606,7 +618,7 @@ function billsCard(){
     if(n!=null) badge += n<0? ' <span class="badge overdue">'+countdown(b.nextDue)+'</span>' :
       n<=7? ' <span class="badge due-soon">'+countdown(b.nextDue)+'</span>' : ' <span class="muted small">'+countdown(b.nextDue)+'</span>';
     rows+='<div class="item">'+
-      '<div class="chk '+(b.status==="ok"?"":"")+'" data-action="bill-toggle" data-id="'+b.id+'" title="Toggle behind/ok">'+(b.status==="ok"?"✓":"!")+'</div>'+
+      '<button type="button" class="chk" data-action="bill-toggle" data-id="'+b.id+'" aria-pressed="'+(b.status==="ok")+'" aria-label="Toggle bill paid or behind">'+(b.status==="ok"?"✓":"!")+'</button>'+
       '<div class="body"><div class="title">'+esc(b.name)+' '+(b.amount?'· '+money(b.amount):'')+'</div>'+
       '<div class="sub">'+badge+'</div></div>'+
       '<div class="acts"><button class="btn sm ghost" data-action="del-bill" data-id="'+b.id+'">✕</button></div></div>';
@@ -614,7 +626,7 @@ function billsCard(){
   var debtRows="";
   state.debts.forEach(function(d){
     debtRows+='<div class="item '+(d.status==="cleared"?"done":"")+'">'+
-      '<div class="chk" data-action="debt-toggle" data-id="'+d.id+'">'+(d.status==="cleared"?"✓":"")+'</div>'+
+      '<button type="button" class="chk" data-action="debt-toggle" data-id="'+d.id+'" aria-pressed="'+(d.status==="cleared")+'" aria-label="Mark debt cleared">'+(d.status==="cleared"?"✓":"")+'</button>'+
       '<div class="body"><div class="title">'+esc(d.name)+' '+(d.balance?'· '+money(d.balance):'')+'</div>'+
       '<div class="sub muted">'+(esc(d.owedTo)||"")+'</div></div>'+
       '<div class="acts"><button class="btn sm ghost" data-action="del-debt" data-id="'+d.id+'">✕</button></div></div>';
@@ -646,7 +658,7 @@ function reviewCard(){
     "Set this week's top 3 money actions"];
   var t=state.moneyReview.tasks;
   var rows=labels.map(function(l,i){
-    return '<div class="item '+(t[i]?"done":"")+'"><div class="chk" data-action="review-toggle" data-i="'+i+'">'+(t[i]?"✓":"")+'</div>'+
+    return '<div class="item '+(t[i]?"done":"")+'"><button type="button" class="chk" data-action="review-toggle" data-i="'+i+'" aria-pressed="'+(!!t[i])+'" aria-label="Toggle review step">'+(t[i]?"✓":"")+'</button>'+
       '<div class="body"><div class="title">'+esc(l)+'</div></div></div>';
   }).join("");
   var trend="";
@@ -664,7 +676,7 @@ function careerCard(){
     var done=!!state.career.done[m[0]];
     var cls=(state.career.currentPhase===m[0])?"area-pin":"";
     return '<div class="item '+(done?"done":"")+'" style="'+(state.career.currentPhase===m[0]?"background:var(--amber-bg);border-radius:8px;padding-left:8px;":"")+'">'+
-      '<div class="chk" data-action="ms-toggle" data-p="'+m[0]+'">'+(done?"✓":"")+'</div>'+
+      '<button type="button" class="chk" data-action="ms-toggle" data-p="'+m[0]+'" aria-pressed="'+done+'" aria-label="Toggle milestone '+m[0]+'">'+(done?"✓":"")+'</button>'+
       '<div class="body"><div class="title"><b class="check-glyph">'+m[0]+'</b> '+esc(m[1])+'</div></div>'+
       '<div class="acts"><button class="btn sm ghost" data-action="set-phase" data-p="'+m[0]+'" title="Set as current phase">◎</button></div></div>';
   }).join("");
@@ -680,7 +692,7 @@ function adminCard(){
   var rows=tasks.map(function(t){
     var n=t.due?daysFromToday(t.due):null;
     var badge=n!=null? (n<0?'<span class="badge overdue">'+countdown(t.due)+'</span>':'<span class="muted small">'+countdown(t.due)+'</span>'):'';
-    return '<div class="item '+(t.done?"done":"")+'"><div class="chk" data-action="admin-toggle" data-id="'+t.id+'">'+(t.done?"✓":"")+'</div>'+
+    return '<div class="item '+(t.done?"done":"")+'"><button type="button" class="chk" data-action="admin-toggle" data-id="'+t.id+'" aria-pressed="'+t.done+'" aria-label="Toggle task done">'+(t.done?"✓":"")+'</button>'+
       '<div class="body"><div class="title">'+esc(t.title)+'</div><div class="sub">'+badge+'</div></div>'+
       '<div class="acts"><button class="btn sm ghost" data-action="del-admin" data-id="'+t.id+'">✕</button></div></div>';
   }).join("");
@@ -762,7 +774,7 @@ function openCheckin(){
     '<div class="quick-add"><button class="btn" data-action="save-checkin">Save check-in</button>'+
     '<button class="btn ghost" data-action="close-checkin">Cancel</button></div>';
   p.hidden=false; p._mood="ok";
-  p.scrollIntoView({behavior: state.settings.reduceMotion?"auto":"smooth", block:"center"});
+  p.scrollIntoView({behavior: motionOff()?"auto":"smooth", block:"center"});
 }
 function saveCheckin(){
   var p=document.getElementById("checkinPanel");
@@ -787,7 +799,7 @@ function saveCheckin(){
   pulseRing();
 }
 function pulseRing(){
-  if(state.settings.reduceMotion) return;
+  if(motionOff()) return;
   var r=document.getElementById("ringFill");
   r.animate? r.animate([{strokeWidth:12},{strokeWidth:16},{strokeWidth:12}],{duration:600}) : null;
 }
@@ -896,15 +908,15 @@ function setView(v){
   currentView=v;
   ["today","areas","left"].forEach(function(x){
     document.getElementById("view-"+x).classList.toggle("hidden", x!==v);
-    var tb=document.getElementById("tab-"+x); if(tb) tb.setAttribute("aria-selected", x===v);
+    var tb=document.getElementById("tab-"+x); if(tb) tb.setAttribute("aria-pressed", x===v);
   });
-  window.scrollTo({top:0, behavior: state.settings.reduceMotion?"auto":"smooth"});
+  window.scrollTo({top:0, behavior: motionOff()?"auto":"smooth"});
 }
 function gotoArea(key){
   setView("areas");
   var map={fines:"area-fines", money:"area-money", review:"area-review", career:"area-career", admin:"area-admin", data:"area-data"};
   var el=document.getElementById(map[key]||("area-"+key));
-  if(el){ el.scrollIntoView({behavior: state.settings.reduceMotion?"auto":"smooth", block:"start"});
+  if(el){ el.scrollIntoView({behavior: motionOff()?"auto":"smooth", block:"start"});
     el.style.boxShadow="0 0 0 3px #cfe0f7"; setTimeout(function(){ el.style.boxShadow=""; },1200); }
 }
 
