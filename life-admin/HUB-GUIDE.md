@@ -35,6 +35,26 @@ unlocked there until you tap **🔒 Lock** (in the *Your data & privacy* card).
 
 (Your plaintext passcode is never stored anywhere — only this one-way hash is.)
 
+### Server login at `/goal` (PHP host)
+
+If `serhatdereli.me` runs on a PHP host, the `/goal` URL is also protected by a
+real **HTTP Basic Auth** login (a browser username/password prompt):
+
+- **Username:** `SerhatDereli`
+- **Password:** the one you set.
+
+This is true server-side protection — the page isn't sent until you log in. After
+that, the in-page passcode screen is skipped automatically (so it's one login,
+not two). Only a bcrypt hash of the password is stored in
+`controllers/DefaultController.php` (never the plaintext). To change it, run
+`php -r "echo password_hash('NEW-PASSWORD', PASSWORD_BCRYPT);"` and paste the
+result into the `$hash` line of `DefaultController::goal()`.
+
+> If the login prompt ever loops on a FastCGI/PHP-FPM host (the `Authorization`
+> header isn't passed through), add this one line to a `.htaccess` in the web
+> root: `CGIPassAuth On` (Apache 2.4.13+), or
+> `SetEnvIf Authorization "(.*)" HTTP_AUTHORIZATION=$1`.
+
 ## Features
 
 - **Today** — the 1–3 things worth doing now (urgent fines first).
