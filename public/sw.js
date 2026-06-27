@@ -3,14 +3,15 @@
  * does NOT intercept the rest of the site. No analytics, no external calls —
  * the privacy guarantee (data stays in the browser) is unaffected.
  */
-var CACHE = 'life-hub-v1';
-var APP = ['/goal', '/life-hub.html', '/serhat-plan.html', '/career-plan.html', '/icon.svg', '/manifest.webmanifest'];
+var CACHE = 'life-hub-v2';
+var APP = ['/goal/', '/life-hub.html', '/serhat-plan.html', '/icon.svg', '/manifest.webmanifest'];
 
 self.addEventListener('install', function (e) {
   e.waitUntil(
-    caches.open(CACHE)
-      .then(function (c) { return c.addAll(APP).catch(function () {}); })
-      .then(function () { return self.skipWaiting(); })
+    caches.open(CACHE).then(function (c) {
+      // Best-effort: cache each item independently so one missing file can't abort the rest.
+      return Promise.all(APP.map(function (u) { return c.add(u).catch(function () {}); }));
+    }).then(function () { return self.skipWaiting(); })
   );
 });
 

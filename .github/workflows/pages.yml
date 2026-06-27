@@ -1,0 +1,68 @@
+name: Deploy site to GitHub Pages
+
+# Publishes a STATIC version of the site to GitHub Pages:
+#  - the portfolio homepage at /
+#  - the private Life Hub app at /goal/  (protected by its in-page passcode;
+#    GitHub Pages can't run PHP, so the server-side /goal login does not apply here)
+#  - the personal plan, PWA manifest/icon/service worker, and assets
+# NOTE: requires the repository to be PUBLIC (or a paid plan) for Pages to build,
+# and the custom domain (serhatdereli.me) to be pointed at GitHub Pages via DNS.
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Stage static site
+        run: |
+          mkdir -p _site/goal
+          # Homepage at root
+          cp pages/index.html              _site/index.html
+          # The Life Hub app at /goal/ (clean URL)
+          cp public/life-hub.html          _site/goal/index.html
+          # Also keep it at /life-hub.html (service-worker cache + direct link)
+          cp public/life-hub.html          _site/life-hub.html
+          cp public/serhat-plan.html       _site/serhat-plan.html
+          # PWA + favicon at root
+          cp public/icon.svg public/manifest.webmanifest public/sw.js public/favicon.ico _site/
+          # Copies inside /goal/ so the Hub's relative manifest/icon links resolve there too
+          cp public/icon.svg public/manifest.webmanifest _site/goal/
+          # Site assets (CSS/images for the homepage)
+          cp -r public/assets              _site/assets
+          # Custom domain
+          echo "serhatdereli.me" > _site/CNAME
+          # (Deliberately NOT published: index.php, controllers, the PHP framework,
+          #  public/tests/ phpinfo, and the friend's career-plan.html.)
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
