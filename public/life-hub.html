@@ -179,6 +179,27 @@
   .row-end{display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap}
   .hidden{display:none !important}
 
+  /* Calendar / agenda */
+  .agenda-group{margin:6px 0 18px}
+  .agenda-group h3{margin:.3em 0 .3em; color:var(--accent)}
+  .agenda-item{display:flex; gap:12px; align-items:baseline; padding:9px 0; border-bottom:1px solid var(--line)}
+  .agenda-item:last-child{border-bottom:none}
+  .agenda-date{flex:0 0 96px; font-size:.82rem; color:var(--muted); font-variant-numeric:tabular-nums}
+  .agenda-item .ico{flex:0 0 auto}
+  .agenda-item .body{flex:1}
+
+  /* Lock screen */
+  #lockScreen{position:fixed; inset:0; z-index:1000; background:linear-gradient(135deg,var(--hero1),var(--hero2));
+    display:flex; align-items:center; justify-content:center; padding:24px}
+  #lockScreen.hidden{display:none}
+  .lock-card{background:var(--card); border-radius:16px; padding:32px 28px; max-width:360px; width:100%;
+    text-align:center; box-shadow:0 18px 50px rgba(0,0,0,.35)}
+  .lock-card h2{margin:.1em 0 .3em}
+  .lock-card p{color:var(--muted); font-size:.9rem; margin:0 0 16px}
+  .lock-card input{width:100%; text-align:center; font-size:1.05rem; margin-bottom:12px}
+  .lock-card .btn{width:100%; justify-content:center}
+  #lockErr{display:none; color:#b13b3b; font-size:.85rem; margin-top:12px}
+
   @media (max-width:600px){
     .hero h1{font-size:1.7rem}
     section.card{padding:20px 18px}
@@ -190,6 +211,17 @@
 </style>
 </head>
 <body>
+
+<div id="lockScreen">
+  <div class="lock-card">
+    <div style="font-size:2.4rem">🔒</div>
+    <h2>Life Hub</h2>
+    <p>Enter your passcode to open your private hub.</p>
+    <input id="lockPass" type="password" placeholder="Passcode" autocomplete="current-password" aria-label="Passcode">
+    <button class="btn" data-action="unlock">Unlock</button>
+    <div id="lockErr">Wrong passcode — try again.</div>
+  </div>
+</div>
 
 <header class="hero">
   <div class="wrap">
@@ -206,6 +238,7 @@
     <button class="tab" id="tab-today" data-view="today" aria-pressed="true">Today</button>
     <button class="tab" id="tab-areas" data-view="areas" aria-pressed="false">All areas</button>
     <button class="tab" id="tab-left" data-view="left" aria-pressed="false">What's left <span class="count" id="leftCount">0</span></button>
+    <button class="tab" id="tab-calendar" data-view="calendar" aria-pressed="false">Calendar</button>
   </div>
 </nav>
 
@@ -237,6 +270,7 @@
   <div id="view-today"></div>
   <div id="view-areas" class="hidden"></div>
   <div id="view-left" class="hidden"></div>
+  <div id="view-calendar" class="hidden"></div>
 
 </main>
 
@@ -313,6 +347,7 @@ function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g, function(c){
   return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]; }); }
 function cur(){ return (state.settings && state.settings.currency) || "£"; }
 function money(n){ if(n==null||n==="") return "—"; var v=Number(n); if(isNaN(v)) return "—";
+  if(state.settings && state.settings.maskMoney) return cur()+" •••";
   return cur()+" "+v.toLocaleString(undefined,{maximumFractionDigits:2}); }
 function countdown(s){
   var n=daysFromToday(s); if(n==null) return "";
@@ -331,7 +366,7 @@ function defaultState(){
     updatedAt: new Date().toISOString(),
     lastOpened: new Date().toISOString(),
     lastExport: null,
-    settings: { name:"", locale:"UK", currency: loc.currency, reduceMotion:false },
+    settings: { name:"", locale:"UK", currency: loc.currency, reduceMotion:false, maskMoney:false },
     checkins: [],
     streak: { current:0, longest:0, lastCheckinDate:null },
     fines: [],
@@ -492,6 +527,7 @@ function render(){
   renderToday();
   renderAreas();
   renderLeft();
+  renderCalendar();
   renderNudge();
   document.getElementById("leftCount").textContent = leftItems().length;
 }
@@ -589,7 +625,10 @@ function finesCard(){
       '<div class="body"><div class="title">'+money(f.amount)+' · '+(esc(f.issuer)||"Unknown issuer")+'</div>'+
       '<div class="sub">'+badge+(f.ref?'<span class="muted">ref '+esc(f.ref)+'</span>':"")+
         decisionPills(f)+'</div></div>'+
-      '<div class="acts"><button class="btn sm ghost" data-action="del-fine" data-id="'+f.id+'">✕</button></div></div>';
+      '<div class="acts">'+
+        (f.payByDate?'<button class="btn sm ghost" data-action="fine-ics" data-id="'+f.id+'" title="Add the pay-by deadline to your calendar (.ics)">📅</button>':'')+
+        '<button class="btn sm ghost" data-action="fine-email" data-id="'+f.id+'" title="Draft a challenge email">✉️</button>'+
+        '<button class="btn sm ghost" data-action="del-fine" data-id="'+f.id+'">✕</button></div></div>';
   });
   return '<section class="card area-pin" id="area-fines"><h2><span class="ico">🅿️</span>Fines &amp; deadlines</h2>'+
     '<p class="muted small">Fines escalate on a clock. Add each one, protect the pay-by date, decide pay or contest.</p>'+
@@ -717,6 +756,8 @@ function dataCard(){
       '<button class="btn sm secondary" data-action="import">⬆ Import backup</button>'+
       '<button class="btn sm ghost" data-action="set-name">Set your name</button>'+
       '<button class="btn sm ghost" data-action="toggle-locale">Locale: '+esc(L().label)+'</button>'+
+      '<button class="btn sm ghost" data-action="mask-toggle">'+(state.settings.maskMoney?"👁 Show amounts":"🙈 Hide amounts")+'</button>'+
+      '<button class="btn sm ghost" data-action="lock-now">🔒 Lock</button>'+
       '<button class="btn sm warn" data-action="reset">Reset everything</button>'+
     '</div>'+
     '<input type="file" id="importFile" accept="application/json,.json" class="hidden">'+
@@ -741,6 +782,48 @@ function renderLeft(){
     '<div class="did-chips">'+chips+'</div>'+rows+'</section>';
 }
 
+function fmtDate(s){ var d=parseLocal(s); if(!d) return s; return d.toLocaleDateString(undefined,{weekday:"short",day:"numeric",month:"short"}); }
+function calendarItems(){
+  var items=[];
+  state.fines.filter(function(f){return !fineResolved(f)&&f.payByDate;}).forEach(function(f){
+    items.push({date:f.payByDate, ico:"🅿️", text:"Pay "+money(f.amount)+" — "+(esc(f.issuer)||"fine"), area:"Fines"}); });
+  state.bills.filter(function(b){return b.nextDue;}).forEach(function(b){
+    items.push({date:b.nextDue, ico:"💰", text:esc(b.name)+(b.amount?" — "+money(b.amount):""), area:"Bills"}); });
+  state.debts.filter(function(d){return d.nextDue&&d.status!=="cleared";}).forEach(function(d){
+    items.push({date:d.nextDue, ico:"💳", text:esc(d.name), area:"Debts"}); });
+  state.goals.filter(function(g){return g.due&&!g.done;}).forEach(function(g){
+    items.push({date:g.due, ico:"🎯", text:esc(g.title), area:"Goals"}); });
+  state.admin.filter(function(t){return t.due&&!t.done;}).forEach(function(t){
+    items.push({date:t.due, ico:"🗂️", text:esc(t.title), area:"Admin"}); });
+  items.sort(function(a,b){ return (daysFromToday(a.date)) - (daysFromToday(b.date)); });
+  return items;
+}
+function renderCalendar(){
+  var items=calendarItems();
+  var groups=[{label:"Overdue", f:function(n){return n<0;}},
+    {label:"Next 7 days", f:function(n){return n>=0&&n<=7;}},
+    {label:"This month", f:function(n){return n>7&&n<=31;}},
+    {label:"Later", f:function(n){return n>31;}}];
+  var html='<section class="card"><div class="row-end"><h2>📅 Calendar</h2>'+
+    '<button class="btn sm ghost" data-action="review-ics" title="Add a recurring weekly money-review reminder">📅 Weekly reminder</button></div>'+
+    '<p class="muted small">Everything with a date, soonest first.</p>';
+  if(!items.length){
+    html+='<div class="today-item calm"><div class="ti-ico">🗓️</div><div class="ti-body"><div class="ti-title">No dated items yet.</div>'+
+      '<div class="ti-sub">Add pay-by dates to fines and due dates to bills/goals to see them here.</div></div></div>';
+  }
+  groups.forEach(function(g){
+    var gi=items.filter(function(it){ var n=daysFromToday(it.date); return n!=null && g.f(n); });
+    if(!gi.length) return;
+    html+='<div class="agenda-group"><h3>'+g.label+'</h3>';
+    gi.forEach(function(it){
+      html+='<div class="agenda-item"><span class="agenda-date">'+esc(fmtDate(it.date))+'</span>'+
+        '<span class="ico">'+it.ico+'</span><span class="body">'+it.text+' <span class="badge">'+it.area+'</span></span></div>';
+    });
+    html+='</div>';
+  });
+  html+='</section>';
+  document.getElementById("view-calendar").innerHTML=html;
+}
 function renderNudge(){
   var slot=document.getElementById("nudgeSlot"); slot.innerHTML="";
   // backup nudge
@@ -888,6 +971,12 @@ document.addEventListener("click", function(ev){
 
     case "export": exportBackup(); break;
     case "import": document.getElementById("importFile").click(); break;
+    case "fine-ics": fineIcs(id); break;
+    case "fine-email": fineEmail(id); break;
+    case "review-ics": reviewIcs(); break;
+    case "mask-toggle": state.settings.maskMoney=!state.settings.maskMoney; save(); render(); break;
+    case "unlock": tryUnlock(); break;
+    case "lock-now": lockNow(); break;
     case "set-name": setName(); break;
     case "toggle-locale": toggleLocale(); break;
     case "reset": resetAll(); break;
@@ -900,6 +989,7 @@ document.addEventListener("change", function(ev){
 document.addEventListener("keydown", function(ev){
   if(ev.key==="Enter"){
     var id=ev.target.id;
+    if(id==="lockPass"){ tryUnlock(); return; }
     if(id==="fine_payby"||id==="fine_ref"||id==="fine_issuer"||id==="fine_amount") addFine();
     else if(id==="bill_name"||id==="bill_amount"||id==="bill_due") addBill();
     else if(id==="admin_title"||id==="admin_due") addAdmin();
@@ -914,7 +1004,7 @@ document.addEventListener("keydown", function(ev){
 });
 function setView(v){
   currentView=v;
-  ["today","areas","left"].forEach(function(x){
+  ["today","areas","left","calendar"].forEach(function(x){
     document.getElementById("view-"+x).classList.toggle("hidden", x!==v);
     var tb=document.getElementById("tab-"+x); if(tb) tb.setAttribute("aria-pressed", x===v);
   });
@@ -991,12 +1081,77 @@ function resetAll(){
 function delFrom(key,id){ state[key]=state[key].filter(function(x){ return x.id!==id; }); save(); render(); }
 function find(key,id){ for(var i=0;i<state[key].length;i++) if(state[key][i].id===id) return state[key][i]; return null; }
 
+/* ====================== REMINDERS (.ics + email) ====================== */
+function pad2(n){ return String(n).padStart(2,"0"); }
+function icsDate(s){ var d=parseLocal(s); if(!d) return null; return d.getFullYear()+pad2(d.getMonth()+1)+pad2(d.getDate()); }
+function icsEsc(s){ return String(s||"").replace(/([,;\\])/g,"\\$1").replace(/\n/g,"\\n"); }
+function icsEvent(o){
+  var dt=icsDate(o.date); if(!dt) return null;
+  var d=parseLocal(o.date), nd=new Date(d.getTime()+86400000);
+  var dtend=nd.getFullYear()+pad2(nd.getMonth()+1)+pad2(nd.getDate());
+  var L=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Life Hub//EN","CALSCALE:GREGORIAN","BEGIN:VEVENT",
+    "UID:"+o.uid,"DTSTART;VALUE=DATE:"+dt,"DTEND;VALUE=DATE:"+dtend,"SUMMARY:"+icsEsc(o.summary)];
+  if(o.desc) L.push("DESCRIPTION:"+icsEsc(o.desc));
+  if(o.rrule) L.push("RRULE:"+o.rrule);
+  if(o.alarm){ L.push("BEGIN:VALARM","TRIGGER:"+o.alarm,"ACTION:DISPLAY","DESCRIPTION:"+icsEsc(o.summary),"END:VALARM"); }
+  L.push("END:VEVENT","END:VCALENDAR");
+  return L.join("\r\n");
+}
+function downloadFile(name, content, type){
+  try{
+    var blob=new Blob([content],{type:type||"text/plain"}); var url=URL.createObjectURL(blob);
+    var a=document.createElement("a"); a.href=url; a.download=name; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function(){ URL.revokeObjectURL(url); },800);
+  }catch(e){ toast("Couldn't create the file"); }
+}
+function fineIcs(id){ var f=find("fines",id); if(!f||!f.payByDate){ toast("Add a pay-by date first"); return; }
+  var ics=icsEvent({uid:f.id+"@life-hub", summary:"Pay parking fine — "+(f.issuer||"")+" ("+money(f.amount)+")",
+    date:f.payByDate, desc:"Pay-by deadline. Ref "+(f.ref||"")+". Pay or contest before it escalates.", alarm:"-P3D"});
+  if(ics){ downloadFile("fine-"+(f.ref||f.id)+".ics", ics, "text/calendar"); toast("Calendar event downloaded 📅"); }
+}
+function reviewIcs(){
+  var ics=icsEvent({uid:"weekly-review@life-hub", summary:"Life Hub — 15-min money review",
+    date:todayStr(), desc:"Open your Life Hub and run the weekly money review.", rrule:"FREQ=WEEKLY"});
+  if(ics){ downloadFile("weekly-money-review.ics", ics, "text/calendar"); toast("Weekly reminder downloaded 📅"); }
+}
+function fineEmail(id){ var f=find("fines",id); if(!f) return; var subj, body;
+  if((state.settings.locale||"UK")==="CH"){
+    subj="Einsprache Ordnungsbusse "+(f.ref||"");
+    body="Sehr geehrte Damen und Herren,\n\nIch erhebe Einsprache gegen die Ordnungsbusse "+(f.ref||"[Referenz]")+" vom "+(f.dateIssued||"[Datum]")+" (Betrag "+money(f.amount)+").\n\nBegruendung: [Ihre Begruendung — z.B. unklare Signalisation, gueltige Bewilligung, Fehler im Bescheid]\n\nFreundliche Gruesse,\n[Ihr Name]";
+  } else {
+    subj="Challenge to PCN "+(f.ref||"[reference]");
+    body="Dear "+(f.issuer||"[Council / Parking Services]")+",\n\nI am writing to formally challenge Penalty Charge Notice "+(f.ref||"[reference]")+", issued on "+(f.dateIssued||"[date]")+" (amount "+money(f.amount)+").\n\nI do not believe the charge is properly due, because: [state your grounds — unclear signage, a valid permit/ticket, errors on the notice, or mitigating circumstances].\n\nI attach the following evidence: [list].\n\nPlease cancel this PCN. If you reject this challenge, please confirm the discounted amount payable and the date by which I may pay it, and set out my further appeal rights.\n\nYours faithfully,\n[Full name]";
+  }
+  try{ window.location.href="mailto:?subject="+encodeURIComponent(subj)+"&body="+encodeURIComponent(body); }catch(e){ toast("Couldn't open your email app"); }
+}
+
+/* ====================== PASSCODE GATE (light, client-side) ====================== */
+/* This deters casual access to the dashboard UI. It is NOT bank-grade security:
+   the page is static, so a determined person could bypass it. Your real data is
+   never exposed regardless — it lives only in this browser's localStorage. */
+function cyrb53(str, seed){ seed=seed>>>0; var h1=0xdeadbeef^seed, h2=0x41c6ce57^seed;
+  for(var i=0,ch;i<str.length;i++){ ch=str.charCodeAt(i); h1=Math.imul(h1^ch,2654435761); h2=Math.imul(h2^ch,1597334677); }
+  h1=Math.imul(h1^(h1>>>16),2246822507); h1^=Math.imul(h2^(h2>>>13),3266489909);
+  h2=Math.imul(h2^(h2>>>16),2246822507); h2^=Math.imul(h1^(h1>>>13),3266489909);
+  return (4294967296*(2097151&h2)+(h1>>>0)).toString(16); }
+function hashPass(p){ var s="serhat.hub.salt.v1|"+String(p); for(var i=0;i<20000;i++){ s=cyrb53(s, i); } return s; }
+var PASS_HASH = "7bdd773b03d4d"; // hash of your passcode — to change it, see life-admin/HUB-GUIDE.md
+var UNLOCK_KEY = "serhat.hub.unlocked.v1";
+function isUnlocked(){ try{ return localStorage.getItem(UNLOCK_KEY)==="1"; }catch(e){ return false; } }
+function showLock(){ var el=document.getElementById("lockScreen"); if(el){ el.classList.remove("hidden"); document.body.style.overflow="hidden"; var i=document.getElementById("lockPass"); if(i){ i.value=""; try{ i.focus(); }catch(e){} } } }
+function hideLock(){ var el=document.getElementById("lockScreen"); if(el){ el.classList.add("hidden"); document.body.style.overflow=""; } }
+function tryUnlock(){ var v=(document.getElementById("lockPass")||{}).value||"";
+  if(hashPass(v)===PASS_HASH){ try{ localStorage.setItem(UNLOCK_KEY,"1"); }catch(e){} hideLock(); }
+  else { var e=document.getElementById("lockErr"); if(e) e.style.display="block"; } }
+function lockNow(){ try{ localStorage.removeItem(UNLOCK_KEY); }catch(e){} showLock(); }
+
 /* ---- init ---- */
 state.lastOpened=new Date().toISOString();
 // weekly review auto-reset on new week
 if(state.moneyReview.weekReset!==weekOf()){ state.moneyReview.tasks=[false,false,false,false]; state.moneyReview.weekReset=weekOf(); }
 save();
 render();
+if(isUnlocked()) hideLock(); else showLock();
 
 // PWA: register the service worker only when served over http(s) — never on file://
 if('serviceWorker' in navigator && location.protocol.indexOf('http')===0){
