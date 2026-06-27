@@ -2,13 +2,13 @@
   "name": "Serhat's Life Hub",
   "short_name": "Life Hub",
   "description": "Your private main brain — check in, see progress, see what's left to do.",
-  "start_url": "/goal",
-  "scope": "/",
+  "start_url": "life-hub.html",
+  "scope": "./",
   "display": "standalone",
   "orientation": "portrait-primary",
   "background_color": "#1f2933",
   "theme_color": "#1f2933",
   "icons": [
-    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
   ]
 }
