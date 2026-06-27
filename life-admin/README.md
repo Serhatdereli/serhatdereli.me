@@ -8,6 +8,23 @@ control — starting with the urgent stuff: **cash flow and parking fines.**
 > rendered or routed by the site. Keep it that way. See
 > [`PRIVACY.md`](./PRIVACY.md) before you put any real numbers in here.
 
+## 🧠 Your Life Hub (the interactive "main brain")
+
+These markdown files are the **deep reference**. The day-to-day **dashboard** is
+[`../public/life-hub.html`](../public/life-hub.html) — a single self-contained
+page you open in any browser (double-click the file, or drag it into a browser
+tab) on your laptop or phone. It gives you a 60-second check-in, an overall
+progress ring, your fines/bills/career in one place, and a "what's left" view.
+
+- **Your data lives only in that browser** (localStorage) — it is never uploaded,
+  never committed to git, never published. Use its **Export backup** button now
+  and then to save a JSON copy somewhere safe.
+- It's **local-only by design**: this repo no longer deploys anything to the
+  public web, so nothing here is viewable by anyone but you.
+- The Hub links to your career plan (`career-plan.html`) and echoes the
+  actionable parts of these trackers; the detailed templates below stay the
+  source of truth for amounts, deadlines and letter drafts.
+
 ## How to use this
 
 1. **Start here:** open [`00-start-here.md`](./00-start-here.md). It's a 30–60

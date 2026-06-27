@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Life Hub — your private main brain</title>
+<meta name="description" content="A calm, private, browser-only dashboard: do a 60-second check-in, see how far you've come, and know the one or two things worth doing right now — money deadlines first.">
+<style>
+  :root{
+    --ink:#2b2f33; --muted:#6b7178; --line:#e6e8eb; --bg:#f6f7f9;
+    --card:#ffffff; --accent:#3a7bd5; --accent-2:#00b894; --hero1:#1f2933; --hero2:#3a4a5a;
+    --code-bg:#f0f2f4; --amber-bg:#fff7e6; --amber-line:#ffe0a3; --amber-ink:#b9770a;
+    --mint1:#eafaf1; --mint2:#e3f6ee; --mint-line:#b9e6cd;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font:17px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:var(--accent); text-decoration:none}
+  a:hover{text-decoration:underline}
+
+  /* Hero */
+  .hero{ background:linear-gradient(135deg,var(--hero1),var(--hero2)); color:#fff; padding:56px 24px 48px; }
+  .hero .wrap{max-width:880px; margin:0 auto; padding:0 24px}
+  .hero h1{font-size:2.2rem; line-height:1.2; margin:0 0 12px; font-weight:700; letter-spacing:-.01em}
+  .hero .lede{ max-width:760px; font-size:1.06rem; color:#dfe6ee;
+    border-left:3px solid var(--accent-2); padding-left:18px; }
+  .hero .chips{margin-top:22px; display:flex; flex-wrap:wrap; gap:10px; align-items:center}
+  .chip{display:inline-flex; align-items:center; gap:7px; background:rgba(255,255,255,.10);
+    border:1px solid rgba(255,255,255,.18); color:#eaf1f8; padding:7px 13px; border-radius:999px; font-size:.86rem}
+  .chip b{color:#fff}
+  .hero .links{margin-top:18px; font-size:.9rem}
+  .hero .links a{color:#cfe0f3}
+
+  /* Layout */
+  .wrap{max-width:880px; margin:0 auto; padding:0 24px}
+  main{padding:26px 0 80px}
+  section.card{ background:var(--card); border:1px solid var(--line); border-radius:14px;
+    padding:26px 30px; margin:0 0 22px; box-shadow:0 1px 2px rgba(16,24,40,.04); }
+  h2{font-size:1.4rem; margin:.1em 0 .5em; letter-spacing:-.01em}
+  h2 .ico{margin-right:.35em}
+  h3{font-size:1.1rem; margin:1.1em 0 .35em}
+  p{margin:.5em 0}
+  .muted{color:var(--muted)}
+  .small{font-size:.88rem}
+  strong{color:#1c2126}
+
+  /* Buttons */
+  button{font:inherit; cursor:pointer}
+  .btn{display:inline-flex; align-items:center; gap:8px; border-radius:9px; padding:10px 16px;
+    border:1px solid var(--accent); background:var(--accent); color:#fff; font-weight:600; font-size:.95rem;
+    transition:filter .15s, transform .05s}
+  .btn:hover{filter:brightness(1.06)}
+  .btn:active{transform:translateY(1px)}
+  .btn.secondary{background:#fff; color:var(--accent)}
+  .btn.ghost{background:transparent; border-color:var(--line); color:var(--ink); font-weight:500}
+  .btn.sm{padding:6px 11px; font-size:.85rem; border-radius:8px}
+  .btn.big{padding:13px 22px; font-size:1.02rem}
+  .btn.warn{border-color:#e0b4b4; background:#fff; color:#b13b3b}
+
+  /* Hero check-in button override */
+  .hero .btn{box-shadow:0 4px 14px rgba(0,0,0,.18)}
+  .hero .btn.secondary{background:rgba(255,255,255,.95)}
+
+  /* Nav tabs */
+  nav.tabs{position:sticky; top:0; z-index:20; background:var(--bg); border-bottom:1px solid var(--line);
+    margin-bottom:22px}
+  nav.tabs .wrap{display:flex; gap:4px; padding-top:8px; padding-bottom:0}
+  .tab{appearance:none; border:none; background:transparent; color:var(--muted); font-weight:600;
+    padding:12px 16px; border-bottom:3px solid transparent; font-size:.95rem}
+  .tab[aria-selected="true"]{color:var(--accent); border-bottom-color:var(--accent)}
+  .tab .count{display:inline-block; min-width:20px; padding:0 6px; margin-left:6px; font-size:.75rem;
+    background:var(--line); color:var(--muted); border-radius:999px; font-weight:700}
+  .tab[aria-selected="true"] .count{background:var(--accent); color:#fff}
+
+  /* Progress ring */
+  .progress-row{display:flex; gap:28px; align-items:center; flex-wrap:wrap}
+  .ring-wrap{position:relative; width:132px; height:132px; flex:0 0 auto}
+  .ring-wrap svg{transform:rotate(-90deg)}
+  .ring-center{position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center}
+  .ring-center .pct{font-size:1.7rem; font-weight:700; line-height:1}
+  .ring-center .sub{font-size:.72rem; color:var(--muted); margin-top:3px}
+  .progress-meta{flex:1 1 240px; min-width:240px}
+  .progress-meta .headline{font-size:1.15rem; font-weight:700}
+  .progress-meta .band{color:var(--muted); margin-top:2px}
+  .bars{margin-top:14px}
+  .bar-row{display:grid; grid-template-columns:1fr auto; gap:4px 12px; align-items:center; margin:9px 0; cursor:pointer}
+  .bar-row .lbl{font-size:.92rem}
+  .bar-row .val{font-size:.82rem; color:var(--muted); white-space:nowrap}
+  .bar-track{grid-column:1 / -1; height:8px; background:var(--line); border-radius:999px; overflow:hidden}
+  .bar-fill{height:100%; background:var(--accent); border-radius:999px; transition:width .4s ease}
+  .bar-fill.done{background:var(--accent-2)}
+
+  /* Today items */
+  .today-item{display:flex; gap:14px; align-items:flex-start; border:1px solid var(--amber-line);
+    background:var(--amber-bg); border-radius:10px; padding:14px 16px; margin:10px 0}
+  .today-item .ti-ico{font-size:1.3rem; line-height:1.4}
+  .today-item .ti-body{flex:1}
+  .today-item .ti-title{font-weight:600}
+  .today-item .ti-sub{font-size:.86rem; color:var(--amber-ink); margin-top:2px}
+  .today-item.calm{border-color:var(--mint-line); background:linear-gradient(135deg,var(--mint1),var(--mint2))}
+  .today-item.calm .ti-sub{color:#0d7a52}
+
+  .callout{ background:linear-gradient(135deg,var(--mint1),var(--mint2)); border:1px solid var(--mint-line);
+    border-left:4px solid var(--accent-2); border-radius:10px; padding:14px 18px; margin:14px 0; }
+  .callout strong{color:#0d7a52}
+
+  /* List items (fines, bills, tasks) */
+  .item{display:flex; gap:12px; align-items:flex-start; padding:13px 0; border-bottom:1px solid var(--line)}
+  .item:last-child{border-bottom:none}
+  .item .chk{flex:0 0 auto; width:24px; height:24px; border:2px solid var(--accent); border-radius:6px;
+    background:#fff; color:var(--accent); display:flex; align-items:center; justify-content:center; font-size:1rem; cursor:pointer}
+  .item.done .chk{background:var(--accent-2); border-color:var(--accent-2); color:#fff}
+  .item .body{flex:1; min-width:0}
+  .item .title{font-weight:600}
+  .item.done .title{text-decoration:line-through; color:var(--muted); font-weight:500}
+  .item .sub{font-size:.85rem; color:var(--muted); margin-top:2px; display:flex; flex-wrap:wrap; gap:8px; align-items:center}
+  .item .acts{display:flex; gap:6px; align-items:center; flex-shrink:0}
+  .badge{font-size:.72rem; padding:2px 8px; border-radius:999px; background:var(--line); color:var(--muted); font-weight:600}
+  .badge.keep{background:#eaf2fc; color:var(--accent)}
+  .badge.due-soon{background:var(--amber-bg); color:var(--amber-ink)}
+  .badge.overdue{background:#fbeaea; color:#b13b3b}
+  .badge.resolved{background:#e6f7f0; color:#0d7a52}
+  .pill{font-size:.78rem; padding:3px 9px; border-radius:999px; border:1px solid var(--line); background:#fff; color:var(--muted)}
+  .pill[aria-pressed="true"]{border-color:var(--accent); background:#eaf2fc; color:var(--accent); font-weight:600}
+  .area-pin{border:2px solid #ffe0a3}
+
+  /* Forms */
+  .quick-add{display:flex; gap:8px; margin-top:14px; flex-wrap:wrap}
+  input[type=text], input[type=number], input[type=date], select, textarea{
+    font:inherit; padding:9px 11px; border:1px solid var(--line); border-radius:8px; background:#fff; color:var(--ink); max-width:100%}
+  input:focus, select:focus, textarea:focus{outline:2px solid #cfe0f7; outline-offset:0; border-color:var(--accent)}
+  .form-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin-top:12px}
+  .field label{display:block; font-size:.78rem; color:var(--muted); margin-bottom:3px; text-transform:uppercase; letter-spacing:.03em}
+  .field input, .field select{width:100%}
+  details.help{margin-top:14px; border:1px solid var(--line); border-radius:10px; padding:0 16px; background:#fbfcfd}
+  details.help summary{cursor:pointer; padding:12px 0; font-weight:600; color:var(--accent)}
+  details.help[open] summary{border-bottom:1px solid var(--line); margin-bottom:10px}
+  details.help .help-body{padding-bottom:14px; font-size:.92rem}
+
+  .bottom-line{display:flex; flex-wrap:wrap; gap:18px; align-items:center; background:#f7f9fc;
+    border:1px solid var(--line); border-radius:10px; padding:14px 18px; margin-top:14px}
+  .bottom-line .stat .n{font-size:1.25rem; font-weight:700}
+  .bottom-line .stat .l{font-size:.78rem; color:var(--muted); text-transform:uppercase; letter-spacing:.03em}
+
+  .check-glyph{color:var(--accent)}
+
+  /* Check-in panel */
+  #checkinPanel{margin-top:16px; border:1px solid var(--mint-line); background:linear-gradient(135deg,var(--mint1),var(--mint2));
+    border-radius:12px; padding:18px 20px}
+  #checkinPanel[hidden]{display:none}
+  .mood-row{display:flex; gap:10px; margin:10px 0}
+  .mood{flex:1; text-align:center; padding:10px; border:1px solid var(--mint-line); background:#fff; border-radius:10px; font-size:.95rem}
+  .mood[aria-pressed="true"]{border-color:var(--accent-2); background:#d8f5e7; font-weight:700}
+  .did-chips{display:flex; flex-wrap:wrap; gap:8px; margin:10px 0}
+
+  /* Toast */
+  #toasts{position:fixed; left:50%; bottom:26px; transform:translateX(-50%); z-index:60; display:flex; flex-direction:column; gap:8px; align-items:center; pointer-events:none}
+  .toast{background:#1f2933; color:#fff; padding:10px 18px; border-radius:999px; font-size:.9rem; box-shadow:0 6px 22px rgba(0,0,0,.22); opacity:0; transform:translateY(8px); transition:opacity .25s, transform .25s}
+  .toast.show{opacity:1; transform:translateY(0)}
+
+  .nudge{display:flex; gap:12px; align-items:center; justify-content:space-between; flex-wrap:wrap;
+    background:#fbfcfd; border:1px solid var(--line); border-left:4px solid var(--accent); border-radius:10px; padding:12px 16px; margin:0 0 18px}
+
+  footer.page{text-align:center; color:var(--muted); font-size:.84rem; padding:24px 24px 50px}
+  hr{border:none; border-top:1px solid var(--line); margin:18px 0}
+  .row-end{display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap}
+  .hidden{display:none !important}
+
+  @media (max-width:600px){
+    .hero h1{font-size:1.7rem}
+    section.card{padding:20px 18px}
+    .ring-wrap{width:110px; height:110px}
+    nav.tabs .wrap{padding-left:12px; padding-right:12px}
+    .tab{padding:11px 11px; font-size:.9rem}
+  }
+  @media (prefers-reduced-motion: reduce){ *{transition:none !important} html{scroll-behavior:auto} }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <h1 id="greeting">Your Life Hub</h1>
+    <div class="lede">Your private main brain. Open it, see where you are, do the next thing. Everything you type stays on this device — never uploaded, never published.</div>
+    <div class="chips" id="heroChips"></div>
+    <div style="margin-top:20px"><button class="btn big secondary" data-action="open-checkin">✓ Check in (60 sec)</button></div>
+    <div class="links"><a href="career-plan.html">Open the full career plan →</a></div>
+  </div>
+</header>
+
+<nav class="tabs">
+  <div class="wrap">
+    <button class="tab" id="tab-today" data-view="today" aria-selected="true">Today</button>
+    <button class="tab" id="tab-areas" data-view="areas" aria-selected="false">All areas</button>
+    <button class="tab" id="tab-left" data-view="left" aria-selected="false">What's left <span class="count" id="leftCount">0</span></button>
+  </div>
+</nav>
+
+<main class="wrap">
+
+  <div id="nudgeSlot"></div>
+
+  <!-- Progress (always visible) -->
+  <section class="card" id="progressCard">
+    <div class="progress-row">
+      <div class="ring-wrap">
+        <svg width="132" height="132" viewBox="0 0 132 132">
+          <circle cx="66" cy="66" r="58" fill="none" stroke="var(--line)" stroke-width="12"></circle>
+          <circle id="ringFill" cx="66" cy="66" r="58" fill="none" stroke="var(--accent-2)" stroke-width="12"
+            stroke-linecap="round" stroke-dasharray="364.4" stroke-dashoffset="364.4"></circle>
+        </svg>
+        <div class="ring-center"><div class="pct" id="ringPct">0%</div><div class="sub" id="ringSub">0 of 0</div></div>
+      </div>
+      <div class="progress-meta">
+        <div class="headline" id="progHeadline">Let's get oriented</div>
+        <div class="band" id="progBand">Start with one thing.</div>
+        <div class="bars" id="bars"></div>
+      </div>
+    </div>
+    <div id="checkinPanel" hidden></div>
+  </section>
+
+  <!-- Views -->
+  <div id="view-today"></div>
+  <div id="view-areas" class="hidden"></div>
+  <div id="view-left" class="hidden"></div>
+
+</main>
+
+<footer class="page">
+  Life Hub · a private, browser-only page · your data never leaves this device
+</footer>
+
+<div id="toasts" aria-live="polite"></div>
+
+<script>
+"use strict";
+/* ============================================================================
+   Life Hub — single-file, browser-only. No network requests of any kind.
+   All state lives in ONE localStorage key. Progress is always derived.
+   ========================================================================== */
+
+var STORAGE_KEY = "serhat.hub.v1";
+var SCHEMA_VERSION = 1;
+
+/* ---- Locale presets (UK default; switchable to CH) ---- */
+var LOCALES = {
+  UK: {
+    label: "United Kingdom", currency: "£",
+    fineWord: "parking ticket (PCN)",
+    fineHelp: "A UK parking ticket is usually about 50% cheaper if paid within 14 days, so the discount date is the thing to protect. " +
+      "Council PCNs: you can challenge informally, then make a formal representation, then appeal free to an independent tribunal " +
+      "(London Tribunals, or the Traffic Penalty Tribunal). Private tickets: appeal the operator, then POPLA or the IAS. " +
+      "Ignoring a PCN escalates: charge certificate → registration at the Traffic Enforcement Centre → bailiffs and added costs. " +
+      "Lean toward paying within the discount window if your grounds are weak; contest when signage/markings were unclear, you'd paid or had a valid permit, or the notice has errors. " +
+      "Free help: Citizens Advice, National Debtline (0808 808 4000).",
+    adminSeeds: ["Open and sort the pile of unopened post / official letters",
+      "Check your Council Tax & any HMRC Self Assessment deadline",
+      "File/scan important documents (ID, insurance, contracts) into one folder",
+      "Book the appointment you've been avoiding (GP, dentist, admin)"]
+  },
+  CH: {
+    label: "Switzerland", currency: "CHF",
+    fineWord: "parking fine (Ordnungsbusse)",
+    fineHelp: "An Ordnungsbusse left unpaid becomes a Mahnung with a Mahngebühr (reminder fee), and can then go to Betreibung (debt enforcement), so the pay-by date is the thing to protect. " +
+      "Lean toward paying within the window when your grounds are weak; contest when signage/markings were unclear, you had a valid permit, or the notice has errors (wrong vehicle, time, or place). " +
+      "Keep essentials current first: rent, Krankenkasse (health insurance), taxes.",
+    adminSeeds: ["Open and sort the pile of unopened post / official letters",
+      "Check the tax-declaration (Steuererklärung) deadline",
+      "Review Krankenkasse / Serafe; file important documents into one folder",
+      "Book the appointment you've been avoiding (doctor, dentist, admin)"]
+  }
+};
+
+/* ---- Career milestones: verbatim from career-plan.html ---- */
+var CAREER_MS = [
+  ["P0","GitHub created, weekly schedule locked, first tiny program shipped"],
+  ["P1","CS50x completed, comfortable with Git"],
+  ["P2","One track chosen, 3 deployed portfolio projects, CV written"],
+  ["P3","First paid project + testimonial (income proof)"],
+  ["P4","DS&A solid, can pass a junior technical interview"],
+  ["P5","Signed junior developer offer at a Swiss company"],
+  ["P6","Mid-level title, niche specialization, savings/investing started"],
+  ["P7","Remote/hybrid Swiss role at a Swiss salary — the dream"]
+];
+
+/* ---- Utilities ---- */
+function uid(p){
+  try{ if(window.crypto && crypto.randomUUID) return p + crypto.randomUUID().slice(0,8); }catch(e){}
+  return p + Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+}
+function todayStr(){ var d=new Date(); return ymd(d); }
+function ymd(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+function parseLocal(s){ // 'YYYY-MM-DD' -> local-midnight Date (avoids UTC off-by-one)
+  if(!s || typeof s!=="string") return null;
+  var m=s.split("-"); if(m.length!==3) return null;
+  var d=new Date(Number(m[0]), Number(m[1])-1, Number(m[2]));
+  return isNaN(d.getTime())? null : d;
+}
+function daysFromToday(s){
+  var d=parseLocal(s); if(!d) return null;
+  var t=new Date(); t=new Date(t.getFullYear(),t.getMonth(),t.getDate());
+  return Math.round((d.getTime()-t.getTime())/86400000);
+}
+function weekOf(d){ // Monday 'YYYY-MM-DD' of the week containing d
+  d = d? new Date(d): new Date();
+  var day=(d.getDay()+6)%7; // Mon=0
+  var mon=new Date(d.getFullYear(),d.getMonth(),d.getDate()-day);
+  return ymd(mon);
+}
+function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g, function(c){
+  return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]; }); }
+function cur(){ return (state.settings && state.settings.currency) || "£"; }
+function money(n){ if(n==null||n==="") return "—"; var v=Number(n); if(isNaN(v)) return "—";
+  return cur()+" "+v.toLocaleString(undefined,{maximumFractionDigits:2}); }
+function countdown(s){
+  var n=daysFromToday(s); if(n==null) return "";
+  if(n<0) return Math.abs(n)+" day"+(Math.abs(n)===1?"":"s")+" overdue";
+  if(n===0) return "due today";
+  if(n===1) return "due tomorrow";
+  return "in "+n+" days";
+}
+
+/* ---- State: load / migrate / save ---- */
+function defaultState(){
+  var loc = LOCALES.UK;
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    lastOpened: new Date().toISOString(),
+    lastExport: null,
+    settings: { name:"", locale:"UK", currency: loc.currency, reduceMotion:false },
+    checkins: [],
+    streak: { current:0, longest:0, lastCheckinDate:null },
+    fines: [],
+    bills: [
+      { id:"b_rent", name:"Rent", essential:true, amount:null, nextDue:null, status:"ok", notes:"", seed:true },
+      { id:"b_energy", name:"Energy / utilities", essential:true, amount:null, nextDue:null, status:"ok", notes:"", seed:true }
+    ],
+    debts: [],
+    money: { cashAvailable:null, lastSnapshotDate:null },
+    moneyReview: { tasks:[false,false,false,false], weekReset: weekOf(), log:[] },
+    career: { currentPhase:"P0", done:{}, hoursLog:[] },
+    admin: loc.adminSeeds.map(function(t,i){ return { id:"a_seed"+i, title:t, due:null, done:false, doneAt:null, notes:"", seed:true }; })
+  };
+}
+function deepMerge(base, over){
+  if(Array.isArray(base)) return Array.isArray(over)? over : base;
+  if(base && typeof base==="object"){
+    var out={}; for(var k in base) out[k]=base[k];
+    if(over && typeof over==="object"){ for(var j in over){
+      out[j] = (base[j] && typeof base[j]==="object" && !Array.isArray(base[j]))
+        ? deepMerge(base[j], over[j]) : over[j];
+    }}
+    return out;
+  }
+  return over===undefined? base : over;
+}
+function migrate(s){ // upgrade ladder keyed on schemaVersion
+  if(!s.schemaVersion) s.schemaVersion=1;
+  // future migrations go here: if(s.schemaVersion<2){...; s.schemaVersion=2;}
+  return s;
+}
+function loadState(){
+  var raw=null;
+  try{ raw=localStorage.getItem(STORAGE_KEY); }catch(e){ raw=null; }
+  if(!raw) return defaultState();
+  var parsed;
+  try{ parsed=JSON.parse(raw); }
+  catch(e){
+    try{ localStorage.setItem(STORAGE_KEY+".corrupt-"+Date.now(), raw); }catch(e2){}
+    return defaultState();
+  }
+  var merged = deepMerge(defaultState(), migrate(parsed||{}));
+  return merged;
+}
+var state = loadState();
+var saveWarned=false;
+function save(){
+  state.updatedAt=new Date().toISOString();
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    saveWarned=false;
+  }catch(e){
+    if(!saveWarned){ saveWarned=true;
+      toast("⚠ Couldn't save — export a backup now"); }
+  }
+}
+
+/* ---- Progress model (always derived) ---- */
+function fineResolved(f){ return f.status==="paid"||f.status==="contested"||f.status==="cancelled"; }
+function areaProgress(){
+  var A={};
+  A.fines = tally(state.fines, fineResolved);
+  A.bills = tally(state.bills.concat(state.debts), function(x){ return x.status==="ok"||x.status==="cleared"; });
+  A.career = tally(CAREER_MS, function(m){ return !!state.career.done[m[0]]; });
+  A.admin = tally(state.admin, function(t){ return t.done; });
+  return A;
+}
+function tally(arr, doneFn){ var d=0,t=arr.length; for(var i=0;i<arr.length;i++) if(doneFn(arr[i])) d++; return {done:d,total:t}; }
+function overall(){
+  var A=areaProgress(), d=0,t=0;
+  for(var k in A){ d+=A[k].done; t+=A[k].total; }
+  return {done:d,total:t, pct: t? Math.round(d/t*100):0};
+}
+
+/* ---- Today selector (deterministic, max 3, nearest in-window fine first) ---- */
+function todayItems(){
+  var out=[];
+  var openFines = state.fines.filter(function(f){ return !fineResolved(f) && f.payByDate; })
+    .sort(function(a,b){ return (daysFromToday(a.payByDate)) - (daysFromToday(b.payByDate)); });
+  // 1) nearest in-window or overdue fine — guaranteed top slot
+  var topFine = openFines.filter(function(f){ var n=daysFromToday(f.payByDate); return n!==null && n<=14; })[0] || openFines[0];
+  if(topFine){
+    out.push({ ico:"🅿️", title:"Pay or decide on the "+(money(topFine.amount))+" "+esc(L().fineWord),
+      sub: (esc(topFine.issuer)||"fine")+" · "+countdown(topFine.payByDate), area:"fines" });
+  }
+  // 2) escalation-window fines
+  state.fines.filter(function(f){ return !fineResolved(f) && f.escalationDate; }).forEach(function(f){
+    var n=daysFromToday(f.escalationDate); if(n!==null && n<=14 && f!==topFine && out.length<3)
+      out.push({ ico:"⏳", title:"Fine escalates soon — handle before fees", sub:(esc(f.issuer)||"fine")+" · escalates "+countdown(f.escalationDate), area:"fines" });
+  });
+  // 3) essential bills/debts due within 7 days
+  state.bills.concat(state.debts).filter(function(b){ return b.essential && b.nextDue; }).forEach(function(b){
+    var n=daysFromToday(b.nextDue); if(n!==null && n<=7 && out.length<3)
+      out.push({ ico:"💰", title:esc(b.name)+" due", sub:countdown(b.nextDue)+" · keep essentials current", area:"money" });
+  });
+  // 4) overdue admin
+  state.admin.filter(function(t){ return !t.done && t.due; }).forEach(function(t){
+    var n=daysFromToday(t.due); if(n!==null && n<0 && out.length<3)
+      out.push({ ico:"🗂️", title:esc(t.title), sub:countdown(t.due), area:"admin" });
+  });
+  // 5) weekly money review due
+  if(out.length<3 && reviewDue())
+    out.push({ ico:"🧮", title:"Do your 15-minute money review", sub:"keeps you ahead — quick and calm", area:"review" });
+  // 6) next career milestone
+  if(out.length<3){
+    for(var i=0;i<CAREER_MS.length;i++){ if(!state.career.done[CAREER_MS[i][0]]){
+      out.push({ ico:"🚀", title:"Career: "+CAREER_MS[i][0]+" — "+esc(CAREER_MS[i][1]), sub:"one small step counts", area:"career" }); break; } }
+  }
+  return out.slice(0,3);
+}
+function reviewDue(){
+  var log=state.moneyReview.log;
+  if(!log.length) return true;
+  var last=log[log.length-1].weekOf;
+  return last !== weekOf();
+}
+function L(){ return LOCALES[(state.settings&&state.settings.locale)||"UK"] || LOCALES.UK; }
+
+/* ---- What's left (flattened, urgency-sorted) ---- */
+function leftItems(){
+  var items=[];
+  state.fines.filter(function(f){return !fineResolved(f);}).forEach(function(f){
+    items.push({ico:"🅿️", area:"Fines", text:(money(f.amount))+" "+(esc(f.issuer)||"fine"), due:f.payByDate}); });
+  state.bills.filter(function(b){return b.status!=="ok";}).forEach(function(b){
+    items.push({ico:"💰", area:"Bills", text:esc(b.name)+" (behind)", due:b.nextDue}); });
+  state.debts.filter(function(d){return d.status!=="cleared";}).forEach(function(d){
+    items.push({ico:"💳", area:"Debts", text:esc(d.name)+" "+(d.balance?money(d.balance):""), due:d.nextDue}); });
+  CAREER_MS.forEach(function(m){ if(!state.career.done[m[0]])
+    items.push({ico:"🚀", area:"Career", text:m[0]+" — "+esc(m[1]), due:null}); });
+  state.admin.filter(function(t){return !t.done;}).forEach(function(t){
+    items.push({ico:"🗂️", area:"Admin", text:esc(t.title), due:t.due}); });
+  items.sort(function(a,b){
+    var na=a.due!=null?daysFromToday(a.due):9999, nb=b.due!=null?daysFromToday(b.due):9999;
+    if(na==null) na=9999; if(nb==null) nb=9999; return na-nb; });
+  return items;
+}
+
+/* ====================== RENDERING ====================== */
+var currentView="today";
+var leftFilter="all";
+
+function render(){
+  renderHero();
+  renderProgress();
+  renderToday();
+  renderAreas();
+  renderLeft();
+  renderNudge();
+  document.getElementById("leftCount").textContent = leftItems().length;
+}
+
+function renderHero(){
+  var h=new Date().getHours();
+  var part = h<12? "Morning": h<18? "Afternoon": "Evening";
+  var nm = (state.settings.name||"").trim();
+  document.getElementById("greeting").textContent = part + (nm? ", "+nm : "") + " 👋";
+  var s=state.streak, chips=[];
+  if(s.current>0) chips.push('<span class="chip">🔥 <b>'+s.current+'</b> day'+(s.current===1?"":"s")+' in a row</span>');
+  else chips.push('<span class="chip">Fresh start — welcome back</span>');
+  var last = s.lastCheckinDate? (daysFromToday(s.lastCheckinDate)===0? "today" : Math.abs(daysFromToday(s.lastCheckinDate))+" day(s) ago") : "not yet";
+  chips.push('<span class="chip">Last check-in: <b>'+last+'</b></span>');
+  var o=overall();
+  chips.push('<span class="chip">Overall: <b>'+o.pct+'%</b></span>');
+  document.getElementById("heroChips").innerHTML = chips.join("");
+}
+
+function renderProgress(){
+  var o=overall();
+  var C=364.4, off=C*(1-o.pct/100);
+  document.getElementById("ringFill").setAttribute("stroke-dashoffset", off);
+  document.getElementById("ringPct").textContent=o.pct+"%";
+  document.getElementById("ringSub").textContent=o.done+" of "+o.total;
+  document.getElementById("progHeadline").textContent = o.total? (o.done+" of "+o.total+" done · "+(o.total-o.done)+" left") : "Add your first items below";
+  var band = o.pct===0? "Start with one thing." : o.pct<41? "You've started. Keep going." :
+    o.pct<81? "More than halfway in places." : o.pct<100? "Almost there." : "All clear. Breathe.";
+  document.getElementById("progBand").textContent=band;
+  var A=areaProgress();
+  var names={fines:"🅿️ Fines", bills:"💰 Bills & Debts", career:"🚀 Career (P0–P7)", admin:"🗂️ Life Admin"};
+  var html="";
+  ["fines","bills","career","admin"].forEach(function(k){
+    var a=A[k], pct=a.total? Math.round(a.done/a.total*100):0;
+    var val=a.total? (a.done+" of "+a.total) : "add your first item";
+    html+='<div class="bar-row" data-scroll="'+k+'"><span class="lbl">'+names[k]+'</span>'+
+      '<span class="val">'+val+'</span>'+
+      '<span class="bar-track"><span class="bar-fill '+(pct===100&&a.total?"done":"")+'" style="width:'+pct+'%"></span></span></div>';
+  });
+  document.getElementById("bars").innerHTML=html;
+}
+
+function renderToday(){
+  var items=todayItems(), html="";
+  html+='<section class="card"><div class="row-end"><h2>Today</h2>'+
+    '<button class="btn sm secondary" data-action="open-checkin">✓ Check in</button></div>';
+  if(!items.length || (overall().total===0)){
+    html+='<div class="today-item calm"><div class="ti-ico">🌤️</div><div class="ti-body">'+
+      '<div class="ti-title">Nothing on fire today.</div>'+
+      '<div class="ti-sub">Add your fines & bills below so nothing escalates by surprise — or do a 60-second check-in.</div></div></div>';
+  } else {
+    items.forEach(function(it){
+      html+='<div class="today-item"><div class="ti-ico">'+it.ico+'</div><div class="ti-body">'+
+        '<div class="ti-title">'+it.title+'</div><div class="ti-sub">'+it.sub+'</div></div>'+
+        '<div class="acts"><button class="btn sm" data-scroll="'+it.area+'">Open</button></div></div>';
+    });
+    html+='<p class="small muted" style="margin-top:12px">Everything else is parked, not forgotten — see <a href="#" data-action="goto-left">What\'s left</a>.</p>';
+  }
+  html+='</section>';
+  document.getElementById("view-today").innerHTML=html;
+}
+
+function renderAreas(){
+  var html="";
+  html+=finesCard();
+  html+=billsCard();
+  html+=reviewCard();
+  html+=careerCard();
+  html+=adminCard();
+  html+=dataCard();
+  document.getElementById("view-areas").innerHTML=html;
+}
+
+function finesCard(){
+  var loc=L();
+  var fines=state.fines.slice().sort(function(a,b){
+    var ra=fineResolved(a), rb=fineResolved(b); if(ra!==rb) return ra?1:-1;
+    return (a.payByDate?daysFromToday(a.payByDate):9999)-(b.payByDate?daysFromToday(b.payByDate):9999); });
+  var rows="";
+  if(!fines.length) rows='<p class="muted small">No fines added yet. Add each one with its pay-by date — this is the most time-sensitive money item.</p>';
+  fines.forEach(function(f){
+    var resolved=fineResolved(f);
+    var n=f.payByDate?daysFromToday(f.payByDate):null;
+    var badge = resolved? '<span class="badge resolved">'+esc(f.status)+'</span>' :
+      (n!=null && n<0? '<span class="badge overdue">'+countdown(f.payByDate)+'</span>' :
+       n!=null && n<=14? '<span class="badge due-soon">'+countdown(f.payByDate)+'</span>' :
+       n!=null? '<span class="badge">'+countdown(f.payByDate)+'</span>':'');
+    rows+='<div class="item '+(resolved?"done":"")+'">'+
+      '<div class="chk" data-action="fine-toggle" data-id="'+f.id+'" title="Mark paid">'+(resolved?"✓":"")+'</div>'+
+      '<div class="body"><div class="title">'+money(f.amount)+' · '+(esc(f.issuer)||"Unknown issuer")+'</div>'+
+      '<div class="sub">'+badge+(f.ref?'<span class="muted">ref '+esc(f.ref)+'</span>':"")+
+        decisionPills(f)+'</div></div>'+
+      '<div class="acts"><button class="btn sm ghost" data-action="del-fine" data-id="'+f.id+'">✕</button></div></div>';
+  });
+  return '<section class="card area-pin" id="area-fines"><h2><span class="ico">🅿️</span>Fines &amp; deadlines</h2>'+
+    '<p class="muted small">Fines escalate on a clock. Add each one, protect the pay-by date, decide pay or contest.</p>'+
+    rows+
+    '<div class="form-grid">'+
+      field("fine_issuer","Issuer","text","e.g. Lambeth Council")+
+      field("fine_amount","Amount ("+cur()+")","number","0")+
+      field("fine_ref","Reference","text","notice no.")+
+      field("fine_payby","Pay-by date","date","")+
+    '</div><div class="quick-add"><button class="btn sm" data-action="add-fine">+ Add fine</button></div>'+
+    '<details class="help"><summary>Pay or contest? ('+esc(loc.label)+')</summary><div class="help-body">'+esc(loc.fineHelp)+
+    '<br><br><span class="muted small">Not legal advice. Always check your specific notice for exact deadlines and appeal routes.</span></div></details>'+
+    '</section>';
+}
+function decisionPills(f){
+  if(fineResolved(f)) return "";
+  var opts=[["pay","Pay"],["contest","Contest"],["check","Check"]];
+  return opts.map(function(o){ return '<button class="pill" data-action="fine-decide" data-id="'+f.id+'" data-val="'+o[0]+'" aria-pressed="'+(f.decision===o[0])+'">'+o[1]+'</button>'; }).join("");
+}
+
+function billsCard(){
+  var rows="";
+  var bills=state.bills.slice().sort(function(a,b){
+    if(a.essential!==b.essential) return a.essential?-1:1;
+    return (a.nextDue?daysFromToday(a.nextDue):9999)-(b.nextDue?daysFromToday(b.nextDue):9999); });
+  bills.forEach(function(b){
+    var n=b.nextDue?daysFromToday(b.nextDue):null;
+    var badge = b.essential?'<span class="badge keep">keep current</span>':'';
+    if(n!=null) badge += n<0? ' <span class="badge overdue">'+countdown(b.nextDue)+'</span>' :
+      n<=7? ' <span class="badge due-soon">'+countdown(b.nextDue)+'</span>' : ' <span class="muted small">'+countdown(b.nextDue)+'</span>';
+    rows+='<div class="item">'+
+      '<div class="chk '+(b.status==="ok"?"":"")+'" data-action="bill-toggle" data-id="'+b.id+'" title="Toggle behind/ok">'+(b.status==="ok"?"✓":"!")+'</div>'+
+      '<div class="body"><div class="title">'+esc(b.name)+' '+(b.amount?'· '+money(b.amount):'')+'</div>'+
+      '<div class="sub">'+badge+'</div></div>'+
+      '<div class="acts"><button class="btn sm ghost" data-action="del-bill" data-id="'+b.id+'">✕</button></div></div>';
+  });
+  var debtRows="";
+  state.debts.forEach(function(d){
+    debtRows+='<div class="item '+(d.status==="cleared"?"done":"")+'">'+
+      '<div class="chk" data-action="debt-toggle" data-id="'+d.id+'">'+(d.status==="cleared"?"✓":"")+'</div>'+
+      '<div class="body"><div class="title">'+esc(d.name)+' '+(d.balance?'· '+money(d.balance):'')+'</div>'+
+      '<div class="sub muted">'+(esc(d.owedTo)||"")+'</div></div>'+
+      '<div class="acts"><button class="btn sm ghost" data-action="del-debt" data-id="'+d.id+'">✕</button></div></div>';
+  });
+  var totalOwed=0;
+  state.fines.forEach(function(f){ if(!fineResolved(f)&&f.amount) totalOwed+=Number(f.amount)||0; });
+  state.debts.forEach(function(d){ if(d.status!=="cleared"&&d.balance) totalOwed+=Number(d.balance)||0; });
+  return '<section class="card" id="area-money"><h2><span class="ico">💰</span>Bills &amp; debts</h2>'+
+    '<h3>Bills</h3>'+(rows||'<p class="muted small">No bills yet.</p>')+
+    '<div class="form-grid">'+field("bill_name","Bill name","text","e.g. Phone")+field("bill_amount","Amount ("+cur()+")","number","0")+field("bill_due","Next due","date","")+
+    '<div class="field"><label>Essential?</label><select id="bill_ess"><option value="no">Optional</option><option value="yes">Essential</option></select></div></div>'+
+    '<div class="quick-add"><button class="btn sm" data-action="add-bill">+ Add bill</button></div>'+
+    '<h3 style="margin-top:18px">Debts</h3>'+(debtRows||'<p class="muted small">No debts tracked.</p>')+
+    '<div class="form-grid">'+field("debt_name","Debt","text","e.g. Credit card")+field("debt_owed","Owed to","text","")+field("debt_bal","Balance ("+cur()+")","number","0")+'</div>'+
+    '<div class="quick-add"><button class="btn sm" data-action="add-debt">+ Add debt</button></div>'+
+    '<div class="bottom-line">'+
+      '<div class="stat"><div class="n" id="cashStat">'+money(state.money.cashAvailable)+'</div><div class="l">Cash available</div></div>'+
+      '<div class="stat"><div class="n">'+money(totalOwed)+'</div><div class="l">Total owed (open)</div></div>'+
+      '<button class="btn sm secondary" data-action="edit-cash">Update cash</button>'+
+    '</div>'+
+    '<div class="callout"><strong>You don\'t have to fix the whole gap this month</strong> — just stop it growing and chip at the urgent end.</div>'+
+    '</section>';
+}
+
+function reviewCard(){
+  var labels=["Update cash available; scan deadlines (anything due in 10 days?)",
+    "Handle any fine nearing its pay-by date now",
+    "Log this week's win",
+    "Set this week's top 3 money actions"];
+  var t=state.moneyReview.tasks;
+  var rows=labels.map(function(l,i){
+    return '<div class="item '+(t[i]?"done":"")+'"><div class="chk" data-action="review-toggle" data-i="'+i+'">'+(t[i]?"✓":"")+'</div>'+
+      '<div class="body"><div class="title">'+esc(l)+'</div></div></div>';
+  }).join("");
+  var trend="";
+  var log=state.moneyReview.log;
+  if(log.length>=2){ var a=log[log.length-2].totalOwed, b=log[log.length-1].totalOwed;
+    if(a!=null&&b!=null){ var diff=a-b; trend = diff>0? '<span class="badge resolved">down '+money(diff)+'</span>' : diff<0? '<span class="badge due-soon">up '+money(-diff)+'</span>':''; } }
+  return '<section class="card" id="area-review"><h2><span class="ico">🧮</span>Weekly money review</h2>'+
+    '<p class="muted small">15 minutes, same time each week. '+(reviewDue()?'<strong>Due now.</strong>':'Done for this week — nice.')+' '+trend+'</p>'+
+    rows+
+    '<div class="quick-add"><button class="btn sm" data-action="finish-review">Finish review &amp; log it</button></div></section>';
+}
+
+function careerCard(){
+  var rows=CAREER_MS.map(function(m){
+    var done=!!state.career.done[m[0]];
+    var cls=(state.career.currentPhase===m[0])?"area-pin":"";
+    return '<div class="item '+(done?"done":"")+'" style="'+(state.career.currentPhase===m[0]?"background:var(--amber-bg);border-radius:8px;padding-left:8px;":"")+'">'+
+      '<div class="chk" data-action="ms-toggle" data-p="'+m[0]+'">'+(done?"✓":"")+'</div>'+
+      '<div class="body"><div class="title"><b class="check-glyph">'+m[0]+'</b> '+esc(m[1])+'</div></div>'+
+      '<div class="acts"><button class="btn sm ghost" data-action="set-phase" data-p="'+m[0]+'" title="Set as current phase">◎</button></div></div>';
+  }).join("");
+  return '<section class="card" id="area-career"><div class="row-end"><h2><span class="ico">🚀</span>Tech career (P0–P7)</h2>'+
+    '<a class="small" href="career-plan.html">Open the full plan →</a></div>'+
+    '<p class="muted small">Your 8 milestones, live. ◎ marks your current phase. Detail lives in the full plan.</p>'+
+    rows+'</section>';
+}
+
+function adminCard(){
+  var tasks=state.admin.slice().sort(function(a,b){ if(a.done!==b.done) return a.done?1:-1;
+    return (a.due?daysFromToday(a.due):9999)-(b.due?daysFromToday(b.due):9999); });
+  var rows=tasks.map(function(t){
+    var n=t.due?daysFromToday(t.due):null;
+    var badge=n!=null? (n<0?'<span class="badge overdue">'+countdown(t.due)+'</span>':'<span class="muted small">'+countdown(t.due)+'</span>'):'';
+    return '<div class="item '+(t.done?"done":"")+'"><div class="chk" data-action="admin-toggle" data-id="'+t.id+'">'+(t.done?"✓":"")+'</div>'+
+      '<div class="body"><div class="title">'+esc(t.title)+'</div><div class="sub">'+badge+'</div></div>'+
+      '<div class="acts"><button class="btn sm ghost" data-action="del-admin" data-id="'+t.id+'">✕</button></div></div>';
+  }).join("");
+  return '<section class="card" id="area-admin"><h2><span class="ico">🗂️</span>Life admin</h2>'+
+    '<p class="muted small">A holding pen so nothing lives only in your head.</p>'+rows+
+    '<div class="form-grid">'+field("admin_title","Task","text","e.g. Renew passport")+field("admin_due","Due (optional)","date","")+'</div>'+
+    '<div class="quick-add"><button class="btn sm" data-action="add-admin">+ Add task</button></div></section>';
+}
+
+function dataCard(){
+  return '<section class="card" id="area-data"><h2><span class="ico">🔒</span>Your data &amp; privacy</h2>'+
+    '<div class="callout"><strong>Everything you type stays in this browser, on this device.</strong> '+
+    'It is never uploaded, never in the website\'s code, never published. Because it\'s browser-only, back it up now and then.</div>'+
+    '<div class="quick-add">'+
+      '<button class="btn sm secondary" data-action="export">⬇ Export backup</button>'+
+      '<button class="btn sm secondary" data-action="import">⬆ Import backup</button>'+
+      '<button class="btn sm ghost" data-action="set-name">Set your name</button>'+
+      '<button class="btn sm ghost" data-action="toggle-locale">Locale: '+esc(L().label)+'</button>'+
+      '<button class="btn sm warn" data-action="reset">Reset everything</button>'+
+    '</div>'+
+    '<input type="file" id="importFile" accept="application/json,.json" class="hidden">'+
+    '<p class="small muted" style="margin-top:10px">Last backup: '+(state.lastExport? new Date(state.lastExport).toLocaleString() : "never")+'</p>'+
+    '</section>';
+}
+
+function renderLeft(){
+  var items=leftItems();
+  var areas=["all","Fines","Bills","Debts","Career","Admin"];
+  var chips=areas.map(function(a){ return '<button class="pill" data-action="left-filter" data-val="'+a+'" aria-pressed="'+(leftFilter===a)+'">'+(a==="all"?"All":a)+'</button>'; }).join(" ");
+  var filtered = leftFilter==="all"? items : items.filter(function(i){ return i.area===leftFilter; });
+  var rows = filtered.length? filtered.map(function(i){
+    var n=i.due!=null?daysFromToday(i.due):null;
+    var badge=n!=null? (n<0?'<span class="badge overdue">'+countdown(i.due)+' — still handleable</span>':'<span class="badge due-soon">'+countdown(i.due)+'</span>'):'<span class="muted small">no date</span>';
+    return '<div class="item"><div class="ti-ico" style="font-size:1.1rem">'+i.ico+'</div>'+
+      '<div class="body"><div class="title" style="font-weight:500">'+i.text+'</div>'+
+      '<div class="sub"><span class="badge">'+i.area+'</span>'+badge+'</div></div></div>';
+  }).join("") : '<div class="today-item calm"><div class="ti-ico">🎉</div><div class="ti-body"><div class="ti-title">Nothing left here.</div><div class="ti-sub">Genuinely — this list is empty. Take the win.</div></div></div>';
+  document.getElementById("view-left").innerHTML =
+    '<section class="card"><h2>What\'s left</h2><p class="muted small">Everything open, soonest first. Small and finite — not a backlog of failure.</p>'+
+    '<div class="did-chips">'+chips+'</div>'+rows+'</section>';
+}
+
+function renderNudge(){
+  var slot=document.getElementById("nudgeSlot"); slot.innerHTML="";
+  // backup nudge
+  if(overall().total>0){
+    var stale = !state.lastExport || (Date.now()-new Date(state.lastExport).getTime() > 14*86400000);
+    if(stale && (state.fines.length||state.debts.length||state.admin.some(function(a){return !a.seed;}))){
+      slot.innerHTML += '<div class="nudge"><span>💾 You\'ve got real data in here — back it up so a cleared browser can\'t lose it.</span>'+
+        '<button class="btn sm secondary" data-action="export">Export backup</button></div>';
+    }
+  }
+  // fine-window nudge (max one)
+  var urgent=state.fines.filter(function(f){ return !fineResolved(f)&&f.payByDate&&daysFromToday(f.payByDate)!=null&&daysFromToday(f.payByDate)<=14; });
+  var checkedToday = state.streak.lastCheckinDate===todayStr();
+  if(urgent.length && !checkedToday){
+    slot.innerHTML += '<div class="nudge"><span>🅿️ A fine is in its pay-by window — 10 minutes now could save you an escalation fee.</span>'+
+      '<button class="btn sm" data-scroll="fines">Look</button></div>';
+  }
+}
+
+function field(id,label,type,ph){
+  return '<div class="field"><label>'+esc(label)+'</label><input id="'+id+'" type="'+type+'" placeholder="'+esc(ph)+'"></div>';
+}
+
+/* ====================== CHECK-IN ====================== */
+function openCheckin(){
+  var p=document.getElementById("checkinPanel");
+  var did=todayItems().map(function(it,i){ return '<button class="pill" data-action="did-toggle" data-i="'+i+'" aria-pressed="false">'+it.ico+' did this</button>'; }).join(" ");
+  p.innerHTML='<h3 style="margin-top:0">60-second check-in</h3>'+
+    '<div class="mood-row">'+
+      '<button class="mood" data-action="mood" data-val="rough">😔 Rough</button>'+
+      '<button class="mood" data-action="mood" data-val="ok">😐 OK</button>'+
+      '<button class="mood" data-action="mood" data-val="good">🙂 Good</button>'+
+    '</div>'+
+    '<div class="field"><label>One line (optional)</label><input id="ci_note" type="text" placeholder="how\'s it going?"></div>'+
+    '<div class="field" style="margin-top:8px"><label>A win, however small (optional)</label><input id="ci_win" type="text" placeholder="e.g. opened the post"></div>'+
+    (did?'<div style="margin-top:8px"><div class="field"><label>Today\'s items</label></div><div class="did-chips">'+did+'</div></div>':'')+
+    '<div class="quick-add"><button class="btn" data-action="save-checkin">Save check-in</button>'+
+    '<button class="btn ghost" data-action="close-checkin">Cancel</button></div>';
+  p.hidden=false; p._mood="ok";
+  p.scrollIntoView({behavior: state.settings.reduceMotion?"auto":"smooth", block:"center"});
+}
+function saveCheckin(){
+  var p=document.getElementById("checkinPanel");
+  var note=(document.getElementById("ci_note")||{}).value||"";
+  var win=(document.getElementById("ci_win")||{}).value||"";
+  var t=todayStr();
+  state.checkins.push({date:t, mood:p._mood||"ok", note:note, win:win});
+  // streak
+  var s=state.streak, last=s.lastCheckinDate;
+  if(last!==t){
+    var gap = last? daysFromToday(last) : null; // negative number of days ago
+    if(last && gap===-1) s.current+=1; // yesterday
+    else if(last && daysFromToday(last)===0) {} // same day (shouldn't hit)
+    else s.current=1; // skipped day(s) or first ever -> fresh start at 1
+    s.lastCheckinDate=t;
+    if(s.current>s.longest) s.longest=s.current;
+  }
+  if(win){ /* surface later via wins; kept in checkins */ }
+  p.hidden=true;
+  save(); render();
+  toast("Logged. That's day "+state.streak.current+". 🎉");
+  pulseRing();
+}
+function pulseRing(){
+  if(state.settings.reduceMotion) return;
+  var r=document.getElementById("ringFill");
+  r.animate? r.animate([{strokeWidth:12},{strokeWidth:16},{strokeWidth:12}],{duration:600}) : null;
+}
+
+/* ====================== TOASTS ====================== */
+function toast(msg){
+  var c=document.getElementById("toasts");
+  var el=document.createElement("div"); el.className="toast"; el.textContent=msg;
+  c.appendChild(el);
+  requestAnimationFrame(function(){ el.classList.add("show"); });
+  setTimeout(function(){ el.classList.remove("show"); setTimeout(function(){ el.remove(); },300); }, 2400);
+}
+
+/* ====================== EXPORT / IMPORT ====================== */
+function exportBackup(){
+  state.lastExport=new Date().toISOString(); save();
+  var blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement("a"); a.href=url; a.download="hub-backup-"+todayStr()+".json";
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(function(){ URL.revokeObjectURL(url); },1000);
+  render(); toast("Backup downloaded ✓");
+}
+function importBackup(file){
+  var r=new FileReader();
+  r.onload=function(){
+    var data;
+    try{ data=JSON.parse(r.result); }catch(e){ alert("That file isn't valid JSON — your current data is untouched."); return; }
+    if(!data || typeof data!=="object" || !("schemaVersion" in data)){ alert("That doesn't look like a Hub backup — your current data is untouched."); return; }
+    var nf=(data.fines||[]).length, nt=(data.admin||[]).length;
+    if(!confirm("Import "+nf+" fines and "+nt+" admin tasks (plus bills, debts, career, check-ins)? This REPLACES your current Hub data.")) return;
+    state=deepMerge(defaultState(), migrate(data));
+    save(); render(); toast("Backup imported ✓");
+  };
+  r.readAsText(file);
+}
+
+/* ====================== EVENTS ====================== */
+function val(id){ var e=document.getElementById(id); return e? e.value.trim():""; }
+function numOrNull(id){ var v=val(id); return v===""? null : Number(v); }
+
+document.addEventListener("click", function(ev){
+  var t=ev.target.closest("[data-action],[data-scroll]"); if(!t) return;
+  var sc=t.getAttribute("data-scroll");
+  if(sc){ ev.preventDefault(); gotoArea(sc); return; }
+  var a=t.getAttribute("data-action"); var id=t.getAttribute("data-id");
+  switch(a){
+    case "open-checkin": openCheckin(); break;
+    case "close-checkin": document.getElementById("checkinPanel").hidden=true; break;
+    case "save-checkin": saveCheckin(); break;
+    case "mood": document.getElementById("checkinPanel")._mood=t.getAttribute("data-val");
+      [].forEach.call(document.querySelectorAll('[data-action=mood]'),function(m){ m.setAttribute("aria-pressed", m===t); }); break;
+    case "did-toggle": t.setAttribute("aria-pressed", t.getAttribute("aria-pressed")!=="true"); break;
+    case "goto-left": ev.preventDefault(); setView("left"); break;
+
+    case "add-fine": addFine(); break;
+    case "fine-toggle": toggleFine(id); break;
+    case "fine-decide": setFineDecision(id, t.getAttribute("data-val")); break;
+    case "del-fine": delFrom("fines", id); break;
+
+    case "add-bill": addBill(); break;
+    case "bill-toggle": toggleBill(id); break;
+    case "del-bill": delFrom("bills", id); break;
+    case "add-debt": addDebt(); break;
+    case "debt-toggle": toggleDebt(id); break;
+    case "del-debt": delFrom("debts", id); break;
+    case "edit-cash": editCash(); break;
+
+    case "review-toggle": state.moneyReview.tasks[Number(t.getAttribute("data-i"))] ^= true;
+      state.moneyReview.tasks[Number(t.getAttribute("data-i"))]=!!state.moneyReview.tasks[Number(t.getAttribute("data-i"))]; save(); render(); break;
+    case "finish-review": finishReview(); break;
+
+    case "ms-toggle": toggleMilestone(t.getAttribute("data-p")); break;
+    case "set-phase": state.career.currentPhase=t.getAttribute("data-p"); save(); render(); toast("Current phase: "+t.getAttribute("data-p")); break;
+
+    case "add-admin": addAdmin(); break;
+    case "admin-toggle": toggleAdmin(id); break;
+    case "del-admin": delFrom("admin", id); break;
+
+    case "export": exportBackup(); break;
+    case "import": document.getElementById("importFile").click(); break;
+    case "set-name": setName(); break;
+    case "toggle-locale": toggleLocale(); break;
+    case "reset": resetAll(); break;
+    case "left-filter": leftFilter=t.getAttribute("data-val"); renderLeft(); break;
+  }
+});
+document.addEventListener("change", function(ev){
+  if(ev.target.id==="importFile" && ev.target.files && ev.target.files[0]){ importBackup(ev.target.files[0]); ev.target.value=""; }
+});
+document.addEventListener("keydown", function(ev){
+  if(ev.key==="Enter"){
+    var id=ev.target.id;
+    if(id==="fine_payby"||id==="fine_ref"||id==="fine_issuer"||id==="fine_amount") addFine();
+    else if(id==="bill_name"||id==="bill_amount"||id==="bill_due") addBill();
+    else if(id==="admin_title"||id==="admin_due") addAdmin();
+    else if(id==="debt_name"||id==="debt_bal"||id==="debt_owed") addDebt();
+  }
+});
+
+/* nav tabs */
+[].forEach.call(document.querySelectorAll(".tab"), function(tab){
+  tab.addEventListener("click", function(){ setView(tab.getAttribute("data-view")); });
+});
+function setView(v){
+  currentView=v;
+  ["today","areas","left"].forEach(function(x){
+    document.getElementById("view-"+x).classList.toggle("hidden", x!==v);
+    var tb=document.getElementById("tab-"+x); if(tb) tb.setAttribute("aria-selected", x===v);
+  });
+  window.scrollTo({top:0, behavior: state.settings.reduceMotion?"auto":"smooth"});
+}
+function gotoArea(key){
+  setView("areas");
+  var map={fines:"area-fines", money:"area-money", review:"area-review", career:"area-career", admin:"area-admin", data:"area-data"};
+  var el=document.getElementById(map[key]||("area-"+key));
+  if(el){ el.scrollIntoView({behavior: state.settings.reduceMotion?"auto":"smooth", block:"start"});
+    el.style.boxShadow="0 0 0 3px #cfe0f7"; setTimeout(function(){ el.style.boxShadow=""; },1200); }
+}
+
+/* ---- mutations ---- */
+function addFine(){
+  var issuer=val("fine_issuer"), amount=numOrNull("fine_amount"), ref=val("fine_ref"), payby=val("fine_payby");
+  if(!issuer && amount==null && !payby){ toast("Add at least an issuer or amount"); return; }
+  state.fines.push({id:uid("f_"), issuer:issuer, ref:ref, amount:amount, dateIssued:todayStr(), payByDate:payby||null, escalationDate:null, decision:"check", status:"open", notes:"", seed:false});
+  save(); render(); toast("Fine added"); gotoArea("fines");
+}
+function toggleFine(id){ var f=find("fines",id); if(!f) return; f.status = fineResolved(f)? "open":"paid"; save(); render(); if(f.status==="paid") toast("Sorted. +1 — nice."); }
+function setFineDecision(id,v){ var f=find("fines",id); if(!f) return; f.decision=(f.decision===v?"":v); save(); render(); }
+function addBill(){
+  var name=val("bill_name"); if(!name){ toast("Name the bill"); return; }
+  state.bills.push({id:uid("b_"), name:name, amount:numOrNull("bill_amount"), nextDue:val("bill_due")||null, essential:val("bill_ess")==="yes", status:"ok", notes:"", seed:false});
+  save(); render(); toast("Bill added");
+}
+function toggleBill(id){ var b=find("bills",id); if(!b) return; b.status = b.status==="ok"?"behind":"ok"; save(); render(); }
+function addDebt(){
+  var name=val("debt_name"); if(!name){ toast("Name the debt"); return; }
+  state.debts.push({id:uid("d_"), name:name, owedTo:val("debt_owed"), balance:numOrNull("debt_bal"), nextDue:null, essential:false, status:"open", notes:"", seed:false});
+  save(); render(); toast("Debt added");
+}
+function toggleDebt(id){ var d=find("debts",id); if(!d) return; d.status = d.status==="cleared"?"open":"cleared"; save(); render(); if(d.status==="cleared") toast("Cleared! 🎉"); }
+function editCash(){ var v=prompt("Cash available right now ("+cur()+"):", state.money.cashAvailable==null?"":state.money.cashAvailable);
+  if(v===null) return; state.money.cashAvailable = v.trim()===""? null : Number(v); state.money.lastSnapshotDate=todayStr(); save(); render(); }
+function finishReview(){
+  var totalOwed=0;
+  state.fines.forEach(function(f){ if(!fineResolved(f)&&f.amount) totalOwed+=Number(f.amount)||0; });
+  state.debts.forEach(function(d){ if(d.status!=="cleared"&&d.balance) totalOwed+=Number(d.balance)||0; });
+  state.moneyReview.log.push({weekOf:weekOf(), totalOwed:totalOwed, cash:state.money.cashAvailable, win:""});
+  state.moneyReview.tasks=[false,false,false,false];
+  // count as today's check-in
+  markCheckinToday();
+  save(); render(); toast("Review logged ✓ — that counts as today's check-in.");
+}
+function toggleMilestone(p){ state.career.done[p]=!state.career.done[p]; save(); render(); if(state.career.done[p]) toast(p+" done. 🎯"); }
+function addAdmin(){
+  var title=val("admin_title"); if(!title){ toast("Describe the task"); return; }
+  state.admin.push({id:uid("a_"), title:title, due:val("admin_due")||null, done:false, doneAt:null, notes:"", seed:false});
+  save(); render(); toast("Task added");
+}
+function toggleAdmin(id){ var t=find("admin",id); if(!t) return; t.done=!t.done; t.doneAt=t.done?new Date().toISOString():null; save(); render(); if(t.done) toast("+1, nice"); }
+function markCheckinToday(){
+  var t=todayStr(), s=state.streak;
+  if(s.lastCheckinDate!==t){
+    if(s.lastCheckinDate && daysFromToday(s.lastCheckinDate)===-1) s.current+=1; else s.current=1;
+    s.lastCheckinDate=t; if(s.current>s.longest) s.longest=s.current;
+    state.checkins.push({date:t, mood:"ok", note:"(weekly review)", win:""});
+  }
+}
+function setName(){ var v=prompt("Your name (for the greeting):", state.settings.name||""); if(v===null) return; state.settings.name=v.trim(); save(); render(); }
+function toggleLocale(){
+  state.settings.locale = state.settings.locale==="UK"?"CH":"UK";
+  state.settings.currency = LOCALES[state.settings.locale].currency;
+  save(); render(); toast("Locale: "+L().label+" ("+cur()+")");
+}
+function resetAll(){
+  var w=prompt('This wipes ALL Hub data on this device. Export a backup first if unsure.\nType RESET to confirm:');
+  if(w!=="RESET") return;
+  state=defaultState(); save(); render(); toast("Reset done.");
+}
+function delFrom(key,id){ state[key]=state[key].filter(function(x){ return x.id!==id; }); save(); render(); }
+function find(key,id){ for(var i=0;i<state[key].length;i++) if(state[key][i].id===id) return state[key][i]; return null; }
+
+/* ---- init ---- */
+state.lastOpened=new Date().toISOString();
+// weekly review auto-reset on new week
+if(state.moneyReview.weekReset!==weekOf()){ state.moneyReview.tasks=[false,false,false,false]; state.moneyReview.weekReset=weekOf(); }
+save();
+render();
+</script>
+</body>
+</html>
